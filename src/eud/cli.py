@@ -39,9 +39,12 @@ def version() -> None:
 
 @app.command()
 def generate(
-    family: str = typer.Option(..., "--family", help="moser | zeta5 | erdos_grid | biquadratic"),
+    family: str = typer.Option(
+        ..., "--family", help="moser | engel_moser | moser_ring | zeta5 | erdos_grid | biquadratic"
+    ),
     out: Path = typer.Option(..., "--out", help="output JSON path"),
     coeff_bound: int = typer.Option(2, "--coeff-bound", help="coefficient half-width"),
+    denom_power: int = typer.Option(1, "--denom-power", help="for moser_ring; denominator is 3^k"),
     zeta_order: int = typer.Option(6, "--zeta-order", help="for moser/cyclotomic; m in zeta_m"),
     R: float = typer.Option(2.5, "--R", help="window radius (cyclotomic)"),
     K: int = typer.Option(5, "--K", help="K parameter (erdos_grid)"),
@@ -56,6 +59,16 @@ def generate(
         from eud.families.moser import MoserParams, build
 
         candidate = build(MoserParams(zeta_order=zeta_order, coeff_bound=coeff_bound))
+    elif family == "engel_moser":
+        from eud.families.engel_moser import EngelMoserParams, build
+
+        candidate = build(EngelMoserParams(coeff_bound=coeff_bound, visible_radius=R))
+    elif family == "moser_ring":
+        from eud.families.moser_ring import MoserRingParams, build
+
+        candidate = build(
+            MoserRingParams(coeff_bound=coeff_bound, denom_power=denom_power, visible_radius=R)
+        )
     elif family == "zeta5":
         from eud.families.cyclotomic import CyclotomicParams
         from eud.families.cyclotomic import build as build_cyc
@@ -141,6 +154,27 @@ def verify(
         field_desc = f"Q(i, sqrt({', sqrt('.join(map(str, primes))}))"
         basis_desc = ["product of i^a * sqrt(p)^b basis"]
         visible = "i -> i ; sqrt(p_k) -> +sqrt(p_k)"
+    elif c.family == "engel_moser":
+        from eud.families.engel_moser import squared_distance_symbolic
+
+        sd = squared_distance_symbolic()
+        field_desc = "Q(sqrt(3), sqrt(11), i) Engel-Moser lattice"
+        basis_desc = ["1", "omega_1", "omega_3", "omega_1*omega_3"]
+        visible = "omega_1 -> exp(i*pi/3); omega_3 -> 5/6 + i*sqrt(11)/6"
+    elif c.family == "moser_ring":
+        from eud.families.moser_ring import MoserRingParams, squared_distance_symbolic
+
+        params = MoserRingParams(
+            denom_power=int(c.params.get("denom_power", 1)),
+            coeff_bound=int(c.params.get("coeff_bound", 1)),
+            visible_radius=float(c.params.get("visible_radius", 1.0)),
+            window_kind=str(c.params.get("window_kind", "visible_disk")),
+            unit_search_bound=c.params.get("unit_search_bound"),
+        )
+        sd = squared_distance_symbolic(params)
+        field_desc = f"Moser ring common denominator 3^{params.denom_power}"
+        basis_desc = ["1/3^k", "omega_1/3^k", "omega_3/3^k", "omega_1*omega_3/3^k"]
+        visible = "omega_1 -> exp(i*pi/3); omega_3 -> 5/6 + i*sqrt(11)/6"
     elif c.family == "erdos_grid":
         field_desc = f"Z[i] grid; squared distance = K = {c.params.get('K')}"
         basis_desc = ["x", "y (in scaled coords)"]
@@ -255,12 +289,13 @@ def baseline(
     no_triangular: bool = typer.Option(False, "--no-triangular"),
     no_moser_hex: bool = typer.Option(False, "--no-moser-hex"),
     no_rect_grid: bool = typer.Option(False, "--no-rect-grid"),
+    no_engel_2025: bool = typer.Option(False, "--no-engel-2025"),
 ) -> None:
-    """Build the strict best-of-finite-construction baseline frontier.
+    """Build the published/reproducible best finite-construction frontier.
 
-    Combines literature curated values, rectangular Erdős grid sweep,
-    triangular Z[zeta_6] hex/parallelogram/strip sweep, and Moser
-    visible-disk sweep. Per n the row with max e is kept.
+    By default this includes Engel et al. 2025's published beam-search
+    table through n=100. Use --no-engel-2025 to rebuild the older
+    reproducible-only frontier.
     """
     from eud.benchmarks.compare import build_baseline_frontier
     from eud.core.io import write_jsonl
@@ -272,6 +307,7 @@ def baseline(
         include_triangular=not no_triangular,
         include_moser_hex=not no_moser_hex,
         include_rect_grid=not no_rect_grid,
+        include_engel_2025=not no_engel_2025,
     )
     p = write_jsonl(rows, out)
     console.print(f"[green]wrote[/green] {p}  rows={len(rows)} n_max={n_max}")

@@ -1,0 +1,92 @@
+[
+  {
+    "k": 25,
+    "e": 72,
+    "density": 2.88,
+    "params": {
+      "denom_power": 1,
+      "coeff_bound": 3,
+      "visible_radius": 2.0,
+      "window_kind": "visible_disk",
+      "unit_search_bound": null
+    },
+    "n_units": 42,
+    "candidate_file": "data/candidates/moser_ring_probe_n25.json",
+    "image_file": "data/candidates/moser_ring_probe_n25.png"
+  },
+  {
+    "k": 36,
+    "e": 117,
+    "density": 3.25,
+    "params": {
+      "denom_power": 1,
+      "coeff_bound": 3,
+      "visible_radius": 2.0,
+      "window_kind": "visible_disk",
+      "unit_search_bound": null
+    },
+    "n_units": 42,
+    "candidate_file": "data/candidates/moser_ring_probe_n36.json",
+    "image_file": "data/candidates/moser_ring_probe_n36.png"
+  },
+  {
+    "k": 49,
+    "e": 180,
+    "density": 3.673469387755102,
+    "params": {
+      "denom_power": 1,
+      "coeff_bound": 3,
+      "visible_radius": 2.0,
+      "window_kind": "visible_disk",
+      "unit_search_bound": null
+    },
+    "n_units": 42,
+    "candidate_file": "data/candidates/moser_ring_probe_n49.json",
+    "image_file": "data/candidates/moser_ring_probe_n49.png"
+  },
+  {
+    "k": 64,
+    "e": 231,
+    "density": 3.609375,
+    "params": {
+      "denom_power": 1,
+      "coeff_bound": 3,
+      "visible_radius": 3.0,
+      "window_kind": "visible_disk",
+      "unit_search_bound": null
+    },
+    "n_units": 42,
+    "candidate_file": "data/candidates/moser_ring_probe_n64.json",
+    "image_file": "data/candidates/moser_ring_probe_n64.png"
+  },
+  {
+    "k": 81,
+    "e": 299,
+    "density": 3.691358024691358,
+    "params": {
+      "denom_power": 1,
+      "coeff_bound": 3,
+      "visible_radius": 2.5,
+      "window_kind": "visible_disk",
+      "unit_search_bound": null
+    },
+    "n_units": 42,
+    "candidate_file": "data/candidates/moser_ring_probe_n81.json",
+    "image_file": "data/candidates/moser_ring_probe_n81.png"
+  },
+  {
+    "k": 100,
+    "e": 363,
+    "density": 3.63,
+    "params": {
+      "denom_power": 1,
+      "coeff_bound": 3,
+      "visible_radius": 3.0,
+      "window_kind": "visible_disk",
+      "unit_search_bound": null
+    },
+    "n_units": 42,
+    "candidate_file": "data/candidates/moser_ring_probe_n100.json",
+    "image_file": "data/candidates/moser_ring_probe_n100.png"
+  }
+]

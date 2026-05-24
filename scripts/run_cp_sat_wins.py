@@ -119,7 +119,6 @@ def main() -> None:
             cp_bound = None
             cp_optimal = False
             cp_time = 0.0
-            cp_chosen: list[int] | None = None
 
             if not args.no_cpsat:
                 shrink_size = min(seed.n, max(args.shrink_multiplier * k, 50))
@@ -142,7 +141,6 @@ def main() -> None:
                     f"optimal={cp_optimal} ({cp_time:.1f}s)"
                 )
 
-                shrunk_coeff_set = {p.coeffs for p in shrunk_seed.points}
                 # Reconstruct selected coeff tuples in cp_sub for traceability.
                 cp_chosen_coeffs = [tuple(p.coeffs) for p in cp_sub.points]
             else:

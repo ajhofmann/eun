@@ -3,15 +3,14 @@
 u(n) := the maximum number of unit-distance pairs among n points in R^2.
 
 Source notes:
-- Exact values for n in [1, 14] are known (Edelsbrunner et al; Schade survey).
-- Lower bounds for n in [15, 30] are taken from published constructions
-  (Schade 2020; OEIS A186705 and related sequences).
-- For n >= 31 we do NOT carry a literature-curated entry here: the
-  published values stop at n=30 in the most recent Schade-style surveys
-  we could find. Instead the strict baseline at n >= 31 is built from
-  the maximum over our own construction sweeps (rectangular Erdős grid,
-  triangular Z[zeta_6] hex disk, Moser visible-disk, cyclotomic
-  cut-and-project) inside `benchmarks/compare.build_baseline_frontier`.
+- Exact values for n in [1, 21] are known after
+  Alexeev--Mixon--Parshall (2025), extending earlier exact work of
+  Edelsbrunner et al., Schade, and Ágoston--Pálvölgyi.
+- Lower bounds for n in [22, 30] are from the densest-known graphs
+  reproduced by Engel--Hammond-Lee--Su--Varga--Zsámboki (2025), Table 2.
+- For n >= 31, published densest-known values through n=100 live in
+  `benchmarks.engel_2025`; this table intentionally stays limited to
+  the classic small-n curated values.
 - We treat values for n >= 15 as best-known *lower bounds* unless flagged
   exact. Higher-n entries in this table are conservative and meant as a
   benchmark, not as an exhaustive frontier - any new construction is
@@ -40,22 +39,22 @@ KNOWN_BOUNDS: list[tuple[int, int, bool]] = [
     (12, 27, True),
     (13, 30, True),
     (14, 33, True),
-    (15, 37, False),
-    (16, 42, False),
-    (17, 44, False),
-    (18, 49, False),
-    (19, 52, False),
-    (20, 56, False),
-    (21, 61, False),
-    (22, 65, False),
-    (23, 70, False),
-    (24, 74, False),
-    (25, 80, False),
-    (26, 85, False),
-    (27, 90, False),
-    (28, 95, False),
-    (29, 99, False),
-    (30, 105, False),
+    (15, 37, True),
+    (16, 41, True),
+    (17, 43, True),
+    (18, 46, True),
+    (19, 50, True),
+    (20, 54, True),
+    (21, 57, True),
+    (22, 60, False),
+    (23, 64, False),
+    (24, 68, False),
+    (25, 72, False),
+    (26, 76, False),
+    (27, 81, False),
+    (28, 85, False),
+    (29, 89, False),
+    (30, 93, False),
 ]
 
 

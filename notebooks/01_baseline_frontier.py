@@ -11,6 +11,8 @@
 # %%
 from pathlib import Path
 
+import pandas as pd
+
 from eud.benchmarks.compare import build_baseline_frontier
 from eud.core.io import write_jsonl
 from eud.viz.plot import plot_frontier_density, plot_frontier_n_e
@@ -31,7 +33,5 @@ print("plots:", OUT / "baseline_n_e.png", OUT / "baseline_density.png")
 # Inspect winning K values:
 
 # %%
-import pandas as pd
-
 df = pd.DataFrame(rows)
 print(df[df["family"] == "erdos_grid"][["n", "e", "density", "K", "m"]].to_string(index=False))

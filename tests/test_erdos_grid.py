@@ -73,9 +73,9 @@ def test_best_grid_density_grows_with_m() -> None:
 def test_known_bounds_table_n_le_14_exact() -> None:
     from eud.benchmarks.known_bounds import KNOWN_BOUNDS, is_exact
 
-    for n, _, exact in KNOWN_BOUNDS[:14]:
+    for n, _, exact in KNOWN_BOUNDS[:21]:
         assert exact, f"n={n} should be exact"
-    for n in range(15, 31):
+    for n in range(22, 31):
         assert not is_exact(n)
 
 

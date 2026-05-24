@@ -72,7 +72,7 @@ def main() -> None:
     for path in sorted(CANDIDATES.glob("win_zeta12_n*.json"), reverse=True):
         n_label = path.stem.split("_")[-1]
         try:
-            n_int = int(n_label.lstrip("n"))
+            int(n_label.lstrip("n"))
         except ValueError:
             continue
         s = load_candidate_summary(path)
@@ -91,6 +91,78 @@ def main() -> None:
                 "unit_vectors": s["unit_vectors"],
             }
         )
+
+    engel_summary_path = Path("data/runs/engel_moser_reproduce.json")
+    if engel_summary_path.exists():
+        for row in json.loads(engel_summary_path.read_text()):
+            path = Path(row["candidate_file"])
+            if not path.exists():
+                continue
+            s = load_candidate_summary(path)
+            entries.append(
+                {
+                    "name": path.stem,
+                    "file": f"/candidates/{path.name}",
+                    "description": (
+                        f"Engel 18-unit Moser reproduction: n={s['n']} e={s['e']} "
+                        f"vs Engel 2025 e={row['engel_2025_e']} "
+                        f"(Δ={row['delta_vs_engel_2025']})"
+                    ),
+                    "family": s["family"],
+                    "n": s["n"],
+                    "e": s["e"],
+                    "density": round(s["e"] / s["n"], 4) if s["n"] else 0.0,
+                    "unit_vectors": s["unit_vectors"],
+                }
+            )
+
+    engel_beyond_path = Path("data/runs/engel_moser_beyond_100.json")
+    if engel_beyond_path.exists():
+        for row in json.loads(engel_beyond_path.read_text()):
+            path = Path(row["candidate_file"])
+            if not path.exists():
+                continue
+            s = load_candidate_summary(path)
+            entries.append(
+                {
+                    "name": path.stem,
+                    "file": f"/candidates/{path.name}",
+                    "description": (
+                        f"Engel 18-unit Moser beyond n=100: n={s['n']} e={s['e']} "
+                        f"vs reproducible fallback {row['reproducible_baseline_e']} "
+                        f"(\u0394=+{row['delta_vs_reproducible_baseline']})"
+                    ),
+                    "family": s["family"],
+                    "n": s["n"],
+                    "e": s["e"],
+                    "density": round(s["e"] / s["n"], 4) if s["n"] else 0.0,
+                    "unit_vectors": s["unit_vectors"],
+                }
+            )
+
+    moser_ring_path = Path("data/runs/moser_ring_probe_best.json")
+    if moser_ring_path.exists():
+        for row in json.loads(moser_ring_path.read_text()):
+            path = Path(row["candidate_file"])
+            if not path.exists():
+                continue
+            s = load_candidate_summary(path)
+            entries.append(
+                {
+                    "name": path.stem,
+                    "file": f"/candidates/{path.name}",
+                    "description": (
+                        f"Moser ring greedy probe: n={s['n']} e={s['e']} "
+                        f"|U|={s['unit_vectors']} denom_power={row['params']['denom_power']} "
+                        f"cb={row['params']['coeff_bound']} r={row['params']['visible_radius']}"
+                    ),
+                    "family": s["family"],
+                    "n": s["n"],
+                    "e": s["e"],
+                    "density": round(s["e"] / s["n"], 4) if s["n"] else 0.0,
+                    "unit_vectors": s["unit_vectors"],
+                }
+            )
 
     descriptions = {
         "gallery_moser_zeta6_B2": "Z[i, \u03b6_6] (Moser, rank 4)",

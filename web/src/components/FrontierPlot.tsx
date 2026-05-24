@@ -16,6 +16,7 @@ interface Props {
 
 const COLORS: Record<string, string> = {
   known_bounds: "#444444",
+  engel_2025: "#7c3aed",
   erdos_grid: "#1f77b4",
   triangular: "#2ca02c",
   moser_hex: "#d62728",

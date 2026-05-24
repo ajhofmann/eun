@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import GraphCanvas, { Candidate } from "./components/GraphCanvas";
+import type { Candidate } from "./components/GraphCanvas";
+import ConstructionExplorer from "./components/ConstructionExplorer";
 import FrontierPlot from "./components/FrontierPlot";
+import InteractiveGraphCanvas from "./components/InteractiveGraphCanvas";
 
 export interface ManifestEntry {
   name: string;
@@ -27,37 +29,66 @@ export interface FrontierRow {
 }
 
 export interface WinV2Row {
+  n: number;
+  e_zeta12_v1: number;
+  e_zeta12_v2: number | null;
+  e_zeta12_best: number;
+  best_zeta12_variant: string;
+  reproducible_baseline_e: number | null;
+  published_sota_e: number | null;
+  delta_vs_reproducible_baseline: number;
+  pct_vs_reproducible_baseline: number | null;
+  delta_vs_published_sota: number | null;
+  pct_vs_published_sota: number | null;
+  beats_reproducible_baseline: boolean;
+  beats_published_sota: boolean;
+}
+
+export interface EngelProbeRow {
   k: number;
-  R: number;
-  window_kind: string;
-  translation_seed: number | null;
-  greedy_e: number;
-  local_swap_e: number;
-  best_e: number;
-  best_method: string;
-  strict_baseline_e: number | null;
-  delta: number;
-  wins: boolean;
+  e?: number;
+  rerendered_e?: number;
+  engel_2025_e: number | null;
+  delta_vs_engel_2025: number | null;
+  candidate_file: string;
+  image_file: string;
+}
+
+export interface EngelBeyondRow {
+  k: number;
+  e: number;
+  density: number;
+  published_baseline_e: number | null;
+  delta_vs_published_baseline: number | null;
+  reproducible_baseline_e: number | null;
+  delta_vs_reproducible_baseline: number | null;
   candidate_file: string;
 }
 
-export interface WinV1Row {
-  n: number;
-  e_zeta12: number;
-  e_strict_baseline: number | null;
-  delta: number;
-  pct: number | null;
-  still_a_win: boolean;
+export interface MoserRingProbeRow {
+  k: number;
+  e: number;
+  density: number;
+  n_units: number;
+  candidate_file: string;
+  params: {
+    denom_power: number;
+    coeff_bound: number;
+    visible_radius: number;
+    window_kind: string;
+  };
 }
 
-type Tab = "results" | "gallery" | "frontier" | "constructions" | "about";
+type Tab = "results" | "explorer" | "gallery" | "frontier" | "constructions" | "about";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("results");
   const [manifest, setManifest] = useState<ManifestEntry[]>([]);
   const [frontier, setFrontier] = useState<FrontierRow[]>([]);
   const [v2Wins, setV2Wins] = useState<WinV2Row[]>([]);
-  const [v1Wins, setV1Wins] = useState<WinV1Row[]>([]);
+  const [engelProbe, setEngelProbe] = useState<EngelProbeRow[]>([]);
+  const [engelBeyond, setEngelBeyond] = useState<EngelBeyondRow[]>([]);
+  const [moserRingProbe, setMoserRingProbe] = useState<MoserRingProbeRow[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -88,13 +119,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetch("/runs/zeta12_winv2_vs_strict.json")
+    fetch("/runs/zeta12_vs_published_sota.json")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j: WinV2Row[]) => setV2Wins(j))
       .catch(() => {});
-    fetch("/runs/zeta12_vs_strict.json")
+    fetch("/runs/engel_moser_reproduce.json")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((j: WinV1Row[]) => setV1Wins(j))
+      .then((j: EngelProbeRow[]) => setEngelProbe(j))
+      .catch(() => {});
+    fetch("/runs/engel_moser_beyond_100.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((j: EngelBeyondRow[]) => setEngelBeyond(j))
+      .catch(() => {});
+    fetch("/runs/moser_ring_probe_best.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((j: MoserRingProbeRow[]) => setMoserRingProbe(j))
       .catch(() => {});
   }, []);
 
@@ -117,11 +156,13 @@ export default function App() {
       <header style={styles.header}>
         <h1 style={styles.title}>eud — Erdős unit-distance search</h1>
         <p style={styles.subtitle}>
-          Cut-and-project constructions vs. the strict best-of-finite-construction baseline.
-          Every claimed unit edge verified exactly via sympy + cross-checked at 256-bit precision in PARI.
+          Cut-and-project constructions, reproducible baselines, and published SOTA.
+          Current honest status: Z[ζ_12] trails Engel et al. 2025, while the
+          Engel-Moser search now matches 5/6 checked table values and powers the
+          post-100 fallback frontier.
         </p>
         <nav style={styles.tabs}>
-          {(["results", "constructions", "gallery", "frontier", "about"] as Tab[]).map((t) => (
+          {(["results", "explorer", "constructions", "gallery", "frontier", "about"] as Tab[]).map((t) => (
             <button
               key={t}
               style={{ ...styles.tab, ...(tab === t ? styles.tabActive : {}) }}
@@ -136,10 +177,18 @@ export default function App() {
       {error && <div style={styles.error}>error: {error}</div>}
 
       {tab === "results" && (
-        <ResultsTab v2Wins={v2Wins} v1Wins={v1Wins} onOpenCandidate={(file) => { setSelected(file); setTab("gallery"); }} />
+        <ResultsTab
+          v2Wins={v2Wins}
+          engelProbe={engelProbe}
+          engelBeyond={engelBeyond}
+          moserRingProbe={moserRingProbe}
+          onOpenCandidate={(file) => { setSelected(file); setTab("gallery"); }}
+        />
       )}
 
       {tab === "constructions" && <ConstructionsTab />}
+
+      {tab === "explorer" && <ConstructionExplorer />}
 
       {tab === "gallery" && (
         <div style={styles.galleryLayout}>
@@ -178,7 +227,7 @@ export default function App() {
                 {candidateMeta?.description && (
                   <p style={styles.description}>{candidateMeta.description}</p>
                 )}
-                <GraphCanvas candidate={candidate} />
+                <InteractiveGraphCanvas candidate={candidate} />
                 <details style={styles.details}>
                   <summary>params</summary>
                   <pre style={styles.pre}>
@@ -196,9 +245,10 @@ export default function App() {
       {tab === "frontier" && (
         <div style={styles.frontierLayout}>
           <p style={styles.description}>
-            Strict best-of-finite-construction frontier: max over literature
-            curated values (n ≤ 30), rectangular Erdős grid, triangular Z[ζ_6]
-            hex / parallelogram / strip, and Moser visible-disk sweep.
+            Published-SOTA-aware frontier: max over literature curated values,
+            Engel et al. 2025 beam-search values through n=100, rectangular
+            Erdős grid, triangular Z[ζ_6] hex / parallelogram / strip, and
+            Moser visible-disk sweep.
             Higher curve = stronger construction at that n. The orange ◯
             markers are gallery candidates plotted on top.
           </p>
@@ -266,16 +316,21 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 
 function ResultsTab({
   v2Wins,
-  v1Wins,
+  engelProbe,
+  engelBeyond,
+  moserRingProbe,
   onOpenCandidate,
 }: {
   v2Wins: WinV2Row[];
-  v1Wins: WinV1Row[];
+  engelProbe: EngelProbeRow[];
+  engelBeyond: EngelBeyondRow[];
+  moserRingProbe: MoserRingProbeRow[];
   onOpenCandidate: (file: string) => void;
 }) {
-  const sortedV2 = [...v2Wins].sort((a, b) => a.k - b.k);
-  const winCount = sortedV2.filter((r) => r.wins).length;
-  const sortedV1 = [...v1Wins].sort((a, b) => a.n - b.n);
+  const sortedV2 = [...v2Wins].sort((a, b) => a.n - b.n);
+  const reproWinCount = sortedV2.filter((r) => r.beats_reproducible_baseline).length;
+  const sotaRows = sortedV2.filter((r) => r.published_sota_e !== null);
+  const sotaWinCount = sortedV2.filter((r) => r.beats_published_sota).length;
 
   return (
     <div style={styles.frontierLayout}>
@@ -283,62 +338,75 @@ function ResultsTab({
         <h2 style={styles.h2}>Headline result</h2>
         <p style={styles.lead}>
           A rank-4 cyclotomic cut-and-project construction (Z[ζ_12] with a
-          translated box window) beats every other finite construction we
-          could reproduce at every perfect square <code>n ∈ [64, 196]</code>{" "}
-          by <strong>+9.8% to +16.7%</strong>. {winCount} of 8 v2 candidates
-          strictly beat the strict baseline; n=49 ties{" "}
-          (Z[ζ_12] = Z[i, ζ_3] is literally the Moser lattice).
+          translated box window) improves our reproducible baseline at{" "}
+          <strong>{reproWinCount}</strong> of the tested n values, but it does{" "}
+          <strong>not</strong> beat published finite SOTA where Engel et al.
+          2025 report a table. It trails that table at {sotaRows.length} of{" "}
+          {sotaRows.length} covered n values; SOTA wins: {sotaWinCount}.
+          The missing ingredient is Engel's 18-unit Moser lattice versus our
+          ζ_12 lattice's 12 unit vectors.
         </p>
         <div style={styles.imgWrap}>
-          <img src="/gallery/wins/v2_wins.png" alt="v2 wins" style={styles.img} />
+          <img src="/gallery/sota/published_vs_ours.png" alt="published SOTA vs ours" style={styles.img} />
+        </div>
+        <div style={styles.imgWrap}>
+          <img src="/gallery/sota/gap_to_engel.png" alt="gap to Engel" style={styles.img} />
         </div>
       </section>
 
       <section>
-        <h2 style={styles.h2}>v2 wins vs strict baseline</h2>
+        <h2 style={styles.h2}>Z[ζ_12] best vs reproducible baseline vs published SOTA</h2>
         <table style={styles.table}>
           <thead>
             <tr>
               <th style={styles.th}>n</th>
-              <th style={styles.th}>v2 e</th>
-              <th style={styles.th}>strict baseline e</th>
-              <th style={styles.th}>Δ</th>
-              <th style={styles.th}>%</th>
-              <th style={styles.th}>window</th>
-              <th style={styles.th}>seed</th>
+              <th style={styles.th}>Z[ζ_12] best</th>
+              <th style={styles.th}>variant</th>
+              <th style={styles.th}>repro baseline</th>
+              <th style={styles.th}>Δ repro</th>
+              <th style={styles.th}>Engel/SOTA</th>
+              <th style={styles.th}>Δ SOTA</th>
+              <th style={styles.th}>status</th>
               <th style={styles.th}>candidate</th>
             </tr>
           </thead>
           <tbody>
             {sortedV2.map((r) => {
-              const pct =
-                r.strict_baseline_e && r.strict_baseline_e > 0
-                  ? (100 * r.delta) / r.strict_baseline_e
-                  : 0;
+              const hasCandidate = r.e_zeta12_v2 !== null;
+              const sotaDelta = r.delta_vs_published_sota;
               return (
-                <tr key={r.k} style={r.wins ? styles.winRow : undefined}>
-                  <td style={styles.td}>{r.k}</td>
-                  <td style={styles.td}>{r.best_e}</td>
-                  <td style={styles.td}>{r.strict_baseline_e ?? "?"}</td>
-                  <td style={{ ...styles.td, fontWeight: r.wins ? 600 : 400 }}>
-                    {r.wins ? `+${r.delta}` : r.delta === 0 ? "tie" : r.delta}
+                <tr key={r.n} style={r.beats_reproducible_baseline ? styles.winRow : undefined}>
+                  <td style={styles.td}>{r.n}</td>
+                  <td style={styles.td}>{r.e_zeta12_best}</td>
+                  <td style={styles.td}>{r.best_zeta12_variant}</td>
+                  <td style={styles.td}>{r.reproducible_baseline_e ?? "?"}</td>
+                  <td style={styles.td}>
+                    {r.delta_vs_reproducible_baseline > 0
+                      ? `+${r.delta_vs_reproducible_baseline}`
+                      : r.delta_vs_reproducible_baseline}
+                  </td>
+                  <td style={styles.td}>{r.published_sota_e ?? "n/a"}</td>
+                  <td style={styles.td}>
+                    {sotaDelta === null ? "n/a" : sotaDelta > 0 ? `+${sotaDelta}` : sotaDelta}
                   </td>
                   <td style={styles.td}>
-                    {r.wins ? `+${pct.toFixed(1)}%` : ""}
+                    {r.beats_published_sota
+                      ? "SOTA WIN"
+                      : r.beats_reproducible_baseline
+                      ? "repro win"
+                      : "loss"}
                   </td>
                   <td style={styles.td}>
-                    {r.window_kind} R={r.R}
-                  </td>
-                  <td style={styles.td}>
-                    {r.translation_seed === null ? "centered" : `seed=${r.translation_seed}`}
-                  </td>
-                  <td style={styles.td}>
-                    <button
-                      style={styles.linkBtn}
-                      onClick={() => onOpenCandidate(`/candidates/winv2_zeta12_n${r.k}.json`)}
-                    >
-                      open →
-                    </button>
+                    {hasCandidate ? (
+                      <button
+                        style={styles.linkBtn}
+                        onClick={() => onOpenCandidate(`/candidates/winv2_zeta12_n${r.n}.json`)}
+                      >
+                        open →
+                      </button>
+                    ) : (
+                      ""
+                    )}
                   </td>
                 </tr>
               );
@@ -348,14 +416,16 @@ function ResultsTab({
       </section>
 
       <section>
-        <h2 style={styles.h2}>Per-n head-to-head: 5 constructions, same n, same scale</h2>
+        <h2 style={styles.h2}>Scaled head-to-head: natural symmetric sizes</h2>
         <p style={styles.description}>
-          Each panel: best triangular | best Moser | best Erdős grid | Z[ζ_12]
-          v1 (centered ball) | Z[ζ_12] v2 (window-explored). The v2 panel on
-          the right strictly dominates the four to its left wherever Δ &gt; 0.
+          Each panel uses a full symmetric window or shape near the same scale:
+          triangular hex disk | Engel 18-unit Moser disk | square Erdős grid |
+          uploaded <code>Z[i, ρ]</code> disk | centered Z[ζ_12] window. Since
+          nothing is greedily peeled, the vertex counts differ slightly across
+          panels but the geometry stays symmetric.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {[64, 81, 100, 121, 144, 169, 196].map((n) => (
+          {[545, 6061, 13669].map((n) => (
             <div key={n} style={styles.imgWrap}>
               <img src={`/gallery/wins/compare_n${n}.png`} alt={`compare n=${n}`} style={styles.img} />
             </div>
@@ -364,13 +434,12 @@ function ResultsTab({
       </section>
 
       <section>
-        <h2 style={styles.h2}>Which construction wins each n in the strict baseline</h2>
+        <h2 style={styles.h2}>Which source wins each n in the published baseline</h2>
         <p style={styles.description}>
-          <code>known_bounds</code> (literature) for n ≤ 30; <code>moser_hex</code>{" "}
-          (rank-4 visible disk) dominates n ∈ [31, ~270]; <code>erdos_grid</code>{" "}
-          (rectangular sweep) takes over for n ≳ 270. The triangular Z[ζ_6]
-          sweep never wins a single n - the rank-4 Moser lattice strictly
-          dominates it because 12 unit vectors {">>"} 6.
+          <code>engel_2025</code> dominates n≤100 where the published beam-search
+          table exists. Beyond that, the viewer falls back to our reproducible
+          construction frontier: Moser visible-disk for a while, then the
+          rectangular Erdős grid.
         </p>
         <div style={styles.imgWrap}>
           <img src="/gallery/baseline/source_share.png" alt="source share" style={styles.img} />
@@ -378,37 +447,46 @@ function ResultsTab({
       </section>
 
       <section>
-        <h2 style={styles.h2}>v1 results (re-scored against strict baseline)</h2>
+        <h2 style={styles.h2}>Reproducing Engel 2025 with the right family</h2>
         <p style={styles.description}>
-          Original v1 wins (centered ball R=3.0) re-scored: 10/12 still beat
-          the strict baseline; n=36 and n=49 became ties because Z[ζ_12]
-          coincides with the Moser lattice and both extract the same dense
-          piece at small n.
+          After adding Engel's exact 18-unit lattice, a visible-disk +
+          best-swap / perturb-and-repair search plus a coefficient-space beam
+          reproduces 5 of the 6 checked Table 2 values exactly. It still misses
+          n=64 by one edge. This is much more promising than ζ_12: the lattice
+          is right, and the remaining gap is likely richer child/canonization
+          machinery.
         </p>
         <table style={styles.table}>
           <thead>
             <tr>
               <th style={styles.th}>n</th>
-              <th style={styles.th}>e (v1, ball)</th>
-              <th style={styles.th}>strict baseline</th>
-              <th style={styles.th}>Δ</th>
-              <th style={styles.th}>%</th>
-              <th style={styles.th}>status</th>
+              <th style={styles.th}>our Engel probe</th>
+              <th style={styles.th}>Engel Table 2</th>
+              <th style={styles.th}>gap</th>
+              <th style={styles.th}>candidate</th>
             </tr>
           </thead>
           <tbody>
-            {sortedV1.map((r) => (
-              <tr key={r.n} style={r.still_a_win ? styles.winRow : undefined}>
-                <td style={styles.td}>{r.n}</td>
-                <td style={styles.td}>{r.e_zeta12}</td>
-                <td style={styles.td}>{r.e_strict_baseline ?? "?"}</td>
+            {engelProbe.map((r) => (
+              <tr key={r.k} style={r.delta_vs_engel_2025 === 0 ? styles.winRow : undefined}>
+                <td style={styles.td}>{r.k}</td>
+                <td style={styles.td}>{r.e ?? r.rerendered_e}</td>
+                <td style={styles.td}>{r.engel_2025_e ?? "n/a"}</td>
                 <td style={styles.td}>
-                  {r.delta > 0 ? `+${r.delta}` : r.delta === 0 ? "0" : r.delta}
+                  {r.delta_vs_engel_2025 === null
+                    ? "n/a"
+                    : r.delta_vs_engel_2025 === 0
+                    ? "tie"
+                    : r.delta_vs_engel_2025}
                 </td>
                 <td style={styles.td}>
-                  {r.pct === null ? "" : (r.pct >= 0 ? `+${r.pct.toFixed(1)}%` : `${r.pct.toFixed(1)}%`)}
+                  <button
+                    style={styles.linkBtn}
+                    onClick={() => onOpenCandidate(`/candidates/${r.candidate_file.split("/").pop()}`)}
+                  >
+                    open →
+                  </button>
                 </td>
-                <td style={styles.td}>{r.still_a_win ? "WIN" : r.delta === 0 ? "TIE" : "LOSS"}</td>
               </tr>
             ))}
           </tbody>
@@ -416,11 +494,107 @@ function ResultsTab({
       </section>
 
       <section>
+        <h2 style={styles.h2}>Engel-Moser beyond the published n≤100 table</h2>
+        <p style={styles.description}>
+          Engel et al.'s public table stops at n=100. These rows run the same
+          18-unit family beyond that range and compare against the repo's
+          fallback frontier, which is reproducible but not a literature SOTA
+          claim. The large positive deltas mean the Engel family should replace
+          the older fallback baseline for these n values.
+        </p>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>n</th>
+              <th style={styles.th}>Engel beam e</th>
+              <th style={styles.th}>e/n</th>
+              <th style={styles.th}>published-aware fallback</th>
+              <th style={styles.th}>Δ fallback</th>
+              <th style={styles.th}>candidate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {engelBeyond.map((r) => (
+              <tr key={r.k} style={styles.winRow}>
+                <td style={styles.td}>{r.k}</td>
+                <td style={styles.td}>{r.e}</td>
+                <td style={styles.td}>{r.density.toFixed(3)}</td>
+                <td style={styles.td}>{r.published_baseline_e ?? "n/a"}</td>
+                <td style={styles.td}>
+                  {r.delta_vs_published_baseline === null
+                    ? "n/a"
+                    : r.delta_vs_published_baseline > 0
+                    ? `+${r.delta_vs_published_baseline}`
+                    : r.delta_vs_published_baseline}
+                </td>
+                <td style={styles.td}>
+                  <button
+                    style={styles.linkBtn}
+                    onClick={() => onOpenCandidate(`/candidates/${r.candidate_file.split("/").pop()}`)}
+                  >
+                    open →
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={styles.imgWrap}>
+          <img src="/gallery/sota/engel_beyond_graphs.png" alt="Engel beyond-100 found graphs" style={styles.img} />
+        </div>
+      </section>
+
+      <section>
+        <h2 style={styles.h2}>Moser ring graph probe</h2>
+        <p style={styles.description}>
+          The common-denominator ring has more exact unit directions than the
+          18-unit lattice. These are the current best greedy-pruned ring graphs
+          from the probe sweep; they are viewable in the gallery and live explorer.
+        </p>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>n</th>
+              <th style={styles.th}>e</th>
+              <th style={styles.th}>e/n</th>
+              <th style={styles.th}>|U|</th>
+              <th style={styles.th}>params</th>
+              <th style={styles.th}>candidate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {moserRingProbe.map((r) => (
+              <tr key={r.k}>
+                <td style={styles.td}>{r.k}</td>
+                <td style={styles.td}>{r.e}</td>
+                <td style={styles.td}>{r.density.toFixed(3)}</td>
+                <td style={styles.td}>{r.n_units}</td>
+                <td style={styles.td}>
+                  k={r.params.denom_power} cb={r.params.coeff_bound} r={r.params.visible_radius}
+                </td>
+                <td style={styles.td}>
+                  <button
+                    style={styles.linkBtn}
+                    onClick={() => onOpenCandidate(`/candidates/${r.candidate_file.split("/").pop()}`)}
+                  >
+                    open →
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={styles.imgWrap}>
+          <img src="/gallery/sota/moser_ring_graphs.png" alt="Moser ring found graphs" style={styles.img} />
+        </div>
+      </section>
+
+      <section>
         <h2 style={styles.h2}>Negative results worth recording</h2>
         <ul style={{ ...styles.description, paddingLeft: 20 }}>
           <li>
             <strong>Higher-rank cyclotomic</strong> (m ∈ {"{15, 20, 24}"}, rank
-            8, 20–30 unit vectors): always strictly worse than Z[ζ_12] v1 at
+            8, 20–30 unit vectors): always strictly worse than the Z[ζ_12] runs at
             every n we probed. Hidden window goes from 2-D to 6-D and density
             collapses faster than the extra unit-vector count helps.
           </li>
@@ -475,6 +649,21 @@ function ConstructionsTab() {
       </section>
 
       <section>
+        <h2 style={styles.h2}>Engel et al. 18-unit Moser lattice</h2>
+        <p style={styles.description}>
+          This is the family behind the published SOTA table through n=100:
+          <code>Z&lt;1, ω₁, ω₃, ω₁ω₃&gt;</code> with{" "}
+          <code>ω₁ = exp(iπ/3)</code> and{" "}
+          <code>ω₃ = exp(i arccos(5/6))</code>. Engel et al. prove it has
+          exactly 18 unit vectors. That is why it beats our ζ_12 lattice,
+          which has only 12.
+        </p>
+        <div style={styles.imgWrap}>
+          <img src="/gallery/baseline/engel_moser_disks.png" alt="engel moser" style={styles.img} />
+        </div>
+      </section>
+
+      <section>
         <h2 style={styles.h2}>Erdős grid (rectangular)</h2>
         <p style={styles.description}>
           Z² inside an mx × my box with unit distance{" "}
@@ -503,14 +692,32 @@ function ConstructionsTab() {
       </section>
 
       <section>
-        <h2 style={styles.h2}>Strict frontier (raw + density)</h2>
+        <h2 style={styles.h2}>Published baseline frontier (raw + density)</h2>
         <p style={styles.description}>
           Raw u(n) and density e/n across n ∈ [1, 1000], colored by which family
-          contributes the strict baseline. Orange stars are the seven Z[ζ_12]
-          v2 wins.
+          contributes the published/reproducible baseline. Purple is Engel et al.
+          2025 through n=100; orange stars are the Z[ζ_12] candidates, which sit
+          below purple where the published SOTA table exists.
         </p>
         <div style={styles.imgWrap}>
           <img src="/gallery/baseline/strict_frontier.png" alt="strict frontier" style={styles.img} />
+        </div>
+      </section>
+
+      <section>
+        <h2 style={styles.h2}>Sawin/OpenAI lesson: asymptotic vs finite search</h2>
+        <p style={styles.description}>
+          The OpenAI/Sawin result says algebraic number fields eventually beat
+          Erdős' old exponent, but that asymptotic construction starts at
+          astronomical n. For n≤1000, finite graph structure dominates:
+          local unit-vector count, boundary loss, window shape, and search.
+          The practical bridge is Engel's 18-unit Moser lattice, not ζ_12.
+        </p>
+        <div style={styles.imgWrap}>
+          <img src="/gallery/sawin/finite_vs_asymptotic.png" alt="finite vs asymptotic" style={styles.img} />
+        </div>
+        <div style={styles.imgWrap}>
+          <img src="/gallery/sawin/lessons_panel.png" alt="Sawin lessons" style={styles.img} />
         </div>
       </section>
     </div>
@@ -571,7 +778,8 @@ function AboutTab() {
         <h2 style={styles.h2}>Pipeline</h2>
         <p style={styles.description}>
           <code>src/eud/families/</code>: erdos_grid, moser, cyclotomic,
-          biquadratic, triangular, generic cut_project. Each exposes a
+          biquadratic, triangular, engel_moser, moser_ring, generic cut_project.
+          Each exposes a
           dataclass <code>Params</code>, an <code>enumerate_unit_vectors()</code>{" "}
           (with sympy verification), and a <code>build()</code> returning a{" "}
           <code>Candidate</code> with explicit integer-coefficient points and
@@ -580,7 +788,8 @@ function AboutTab() {
         <p style={styles.description}>
           <code>src/eud/search/</code>: greedy_peel and core_peel (deterministic
           shrinkers), local_swap (simulated annealing with warm-start from
-          greedy), CP-SAT exact densest-k via OR-Tools.
+          greedy), CP-SAT exact densest-k via OR-Tools, and Engel-style
+          coefficient-space beam search.
         </p>
         <p style={styles.description}>
           <code>src/eud/benchmarks/</code>: literature curated table +

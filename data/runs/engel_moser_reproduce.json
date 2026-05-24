@@ -1,0 +1,626 @@
+[
+  {
+    "k": 25,
+    "e": 72,
+    "engel_2025_e": 72,
+    "delta_vs_engel_2025": 0,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.25
+    },
+    "search": {
+      "starts": 60,
+      "perturb_rounds": 80,
+      "best_e": 72,
+      "beam": {
+        "width": 18,
+        "rounds": 12,
+        "max_additions_per_state": 18,
+        "drop_branches": 4,
+        "rounds_completed": 12,
+        "states_seen": 5101,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 72,
+            "beam_best_e": 72,
+            "states_seen": 55
+          },
+          {
+            "round": 2,
+            "best_e": 72,
+            "beam_best_e": 72,
+            "states_seen": 602
+          },
+          {
+            "round": 3,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 883
+          },
+          {
+            "round": 4,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 1300
+          },
+          {
+            "round": 5,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 1916
+          },
+          {
+            "round": 6,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 2582
+          },
+          {
+            "round": 7,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 3036
+          },
+          {
+            "round": 8,
+            "best_e": 72,
+            "beam_best_e": 72,
+            "states_seen": 3396
+          },
+          {
+            "round": 9,
+            "best_e": 72,
+            "beam_best_e": 72,
+            "states_seen": 3985
+          },
+          {
+            "round": 10,
+            "best_e": 72,
+            "beam_best_e": 72,
+            "states_seen": 4412
+          },
+          {
+            "round": 11,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 4754
+          },
+          {
+            "round": 12,
+            "best_e": 72,
+            "beam_best_e": 71,
+            "states_seen": 5101
+          }
+        ],
+        "seed_e": 72,
+        "best_e": 72,
+        "wall_time_s": 20.054739952087402
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_reproduce_n25.json",
+    "image_file": "data/candidates/engel_moser_reproduce_n25.png",
+    "certificate_file": "data/verified/engel_moser_reproduce_n25_cert.jsonl"
+  },
+  {
+    "k": 36,
+    "e": 119,
+    "engel_2025_e": 119,
+    "delta_vs_engel_2025": 0,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.5
+    },
+    "search": {
+      "starts": 60,
+      "perturb_rounds": 80,
+      "best_e": 119,
+      "beam": {
+        "width": 18,
+        "rounds": 12,
+        "max_additions_per_state": 18,
+        "drop_branches": 4,
+        "rounds_completed": 12,
+        "states_seen": 4124,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 119,
+            "beam_best_e": 119,
+            "states_seen": 55
+          },
+          {
+            "round": 2,
+            "best_e": 119,
+            "beam_best_e": 119,
+            "states_seen": 547
+          },
+          {
+            "round": 3,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 870
+          },
+          {
+            "round": 4,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 1184
+          },
+          {
+            "round": 5,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 1574
+          },
+          {
+            "round": 6,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 1703
+          },
+          {
+            "round": 7,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 2071
+          },
+          {
+            "round": 8,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 2434
+          },
+          {
+            "round": 9,
+            "best_e": 119,
+            "beam_best_e": 116,
+            "states_seen": 2786
+          },
+          {
+            "round": 10,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 3251
+          },
+          {
+            "round": 11,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 3743
+          },
+          {
+            "round": 12,
+            "best_e": 119,
+            "beam_best_e": 117,
+            "states_seen": 4124
+          }
+        ],
+        "seed_e": 119,
+        "best_e": 119,
+        "wall_time_s": 29.29267191886902
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_reproduce_n36.json",
+    "image_file": "data/candidates/engel_moser_reproduce_n36.png",
+    "certificate_file": "data/verified/engel_moser_reproduce_n36_cert.jsonl"
+  },
+  {
+    "k": 49,
+    "e": 180,
+    "engel_2025_e": 180,
+    "delta_vs_engel_2025": 0,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0
+    },
+    "search": {
+      "starts": 60,
+      "perturb_rounds": 80,
+      "best_e": 180,
+      "beam": {
+        "width": 18,
+        "rounds": 12,
+        "max_additions_per_state": 18,
+        "drop_branches": 4,
+        "rounds_completed": 12,
+        "states_seen": 4580,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 180,
+            "beam_best_e": 180,
+            "states_seen": 55
+          },
+          {
+            "round": 2,
+            "best_e": 180,
+            "beam_best_e": 180,
+            "states_seen": 444
+          },
+          {
+            "round": 3,
+            "best_e": 180,
+            "beam_best_e": 180,
+            "states_seen": 543
+          },
+          {
+            "round": 4,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 1084
+          },
+          {
+            "round": 5,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 1461
+          },
+          {
+            "round": 6,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 1789
+          },
+          {
+            "round": 7,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 2037
+          },
+          {
+            "round": 8,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 2434
+          },
+          {
+            "round": 9,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 2997
+          },
+          {
+            "round": 10,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 3522
+          },
+          {
+            "round": 11,
+            "best_e": 180,
+            "beam_best_e": 176,
+            "states_seen": 4040
+          },
+          {
+            "round": 12,
+            "best_e": 180,
+            "beam_best_e": 175,
+            "states_seen": 4580
+          }
+        ],
+        "seed_e": 180,
+        "best_e": 180,
+        "wall_time_s": 43.50982093811035
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_reproduce_n49.json",
+    "image_file": "data/candidates/engel_moser_reproduce_n49.png",
+    "certificate_file": "data/verified/engel_moser_reproduce_n49_cert.jsonl"
+  },
+  {
+    "k": 64,
+    "e": 251,
+    "engel_2025_e": 252,
+    "delta_vs_engel_2025": -1,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.75
+    },
+    "search": {
+      "starts": 60,
+      "perturb_rounds": 80,
+      "best_e": 251,
+      "beam": {
+        "width": 18,
+        "rounds": 12,
+        "max_additions_per_state": 18,
+        "drop_branches": 4,
+        "rounds_completed": 12,
+        "states_seen": 3695,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 251,
+            "beam_best_e": 251,
+            "states_seen": 55
+          },
+          {
+            "round": 2,
+            "best_e": 251,
+            "beam_best_e": 251,
+            "states_seen": 536
+          },
+          {
+            "round": 3,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 717
+          },
+          {
+            "round": 4,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 968
+          },
+          {
+            "round": 5,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 1218
+          },
+          {
+            "round": 6,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 1670
+          },
+          {
+            "round": 7,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 2020
+          },
+          {
+            "round": 8,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 2361
+          },
+          {
+            "round": 9,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 2690
+          },
+          {
+            "round": 10,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 3043
+          },
+          {
+            "round": 11,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 3349
+          },
+          {
+            "round": 12,
+            "best_e": 251,
+            "beam_best_e": 249,
+            "states_seen": 3695
+          }
+        ],
+        "seed_e": 251,
+        "best_e": 251,
+        "wall_time_s": 68.06849884986877
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_reproduce_n64.json",
+    "image_file": "data/candidates/engel_moser_reproduce_n64.png",
+    "certificate_file": "data/verified/engel_moser_reproduce_n64_cert.jsonl"
+  },
+  {
+    "k": 81,
+    "e": 338,
+    "engel_2025_e": 338,
+    "delta_vs_engel_2025": 0,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.75
+    },
+    "search": {
+      "starts": 60,
+      "perturb_rounds": 80,
+      "best_e": 338,
+      "beam": {
+        "width": 18,
+        "rounds": 12,
+        "max_additions_per_state": 18,
+        "drop_branches": 4,
+        "rounds_completed": 12,
+        "states_seen": 4090,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 55
+          },
+          {
+            "round": 2,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 526
+          },
+          {
+            "round": 3,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 938
+          },
+          {
+            "round": 4,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 1326
+          },
+          {
+            "round": 5,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 1673
+          },
+          {
+            "round": 6,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 1855
+          },
+          {
+            "round": 7,
+            "best_e": 338,
+            "beam_best_e": 338,
+            "states_seen": 2045
+          },
+          {
+            "round": 8,
+            "best_e": 338,
+            "beam_best_e": 336,
+            "states_seen": 2346
+          },
+          {
+            "round": 9,
+            "best_e": 338,
+            "beam_best_e": 336,
+            "states_seen": 2824
+          },
+          {
+            "round": 10,
+            "best_e": 338,
+            "beam_best_e": 337,
+            "states_seen": 3279
+          },
+          {
+            "round": 11,
+            "best_e": 338,
+            "beam_best_e": 337,
+            "states_seen": 3717
+          },
+          {
+            "round": 12,
+            "best_e": 338,
+            "beam_best_e": 337,
+            "states_seen": 4090
+          }
+        ],
+        "seed_e": 338,
+        "best_e": 338,
+        "wall_time_s": 72.21631717681885
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_reproduce_n81.json",
+    "image_file": "data/candidates/engel_moser_reproduce_n81.png",
+    "certificate_file": "data/verified/engel_moser_reproduce_n81_cert.jsonl"
+  },
+  {
+    "k": 100,
+    "e": 439,
+    "engel_2025_e": 439,
+    "delta_vs_engel_2025": 0,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.75
+    },
+    "search": {
+      "starts": 60,
+      "perturb_rounds": 80,
+      "best_e": 439,
+      "beam": {
+        "width": 18,
+        "rounds": 12,
+        "max_additions_per_state": 18,
+        "drop_branches": 4,
+        "rounds_completed": 12,
+        "states_seen": 3136,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 439,
+            "beam_best_e": 439,
+            "states_seen": 55
+          },
+          {
+            "round": 2,
+            "best_e": 439,
+            "beam_best_e": 439,
+            "states_seen": 469
+          },
+          {
+            "round": 3,
+            "best_e": 439,
+            "beam_best_e": 439,
+            "states_seen": 684
+          },
+          {
+            "round": 4,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 1105
+          },
+          {
+            "round": 5,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 1489
+          },
+          {
+            "round": 6,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 1702
+          },
+          {
+            "round": 7,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 1922
+          },
+          {
+            "round": 8,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 2071
+          },
+          {
+            "round": 9,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 2323
+          },
+          {
+            "round": 10,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 2604
+          },
+          {
+            "round": 11,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 2776
+          },
+          {
+            "round": 12,
+            "best_e": 439,
+            "beam_best_e": 438,
+            "states_seen": 3136
+          }
+        ],
+        "seed_e": 439,
+        "best_e": 439,
+        "wall_time_s": 90.6924500465393
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_reproduce_n100.json",
+    "image_file": "data/candidates/engel_moser_reproduce_n100.png",
+    "certificate_file": "data/verified/engel_moser_reproduce_n100_cert.jsonl"
+  }
+]

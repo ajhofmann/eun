@@ -20,6 +20,8 @@ dependencies = [
     "ortools>=9.8",
     "sympy>=1.12",
     "cypari2>=2.2.2",
+    "fastapi>=0.136.3",
+    "uvicorn>=0.47.0",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +37,7 @@ dev = [
 
 [project.scripts]
 eud = "eud.cli:app"
+eud-api = "eud.web_api:main"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]

@@ -1,8 +1,9 @@
 """Build a baseline frontier and compare candidates against it.
 
-Strict baseline = max over (literature curated table, rectangular Erdős
-grid sweep, triangular Z[zeta_6] hex/parallelogram/strip sweep, Moser
-visible-disk sweep) for every n in [1, n_max].
+Published baseline = max over (literature curated table, Engel et al. 2025
+beam-search table, rectangular Erdős grid sweep, triangular Z[zeta_6]
+hex/parallelogram/strip sweep, Moser visible-disk sweep) for every n in
+[1, n_max].
 
 The strict frontier replaces the older "literature + square Erdős grid"
 frontier and is the right denominator for any "beats SOTA" claim against
@@ -14,6 +15,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from pathlib import Path
 
+from eud.benchmarks.engel_2025 import engel_2025_rows
 from eud.benchmarks.known_bounds import known_bounds_rows
 from eud.benchmarks.score import Frontier
 from eud.core.io import read_jsonl, write_jsonl
@@ -28,11 +30,13 @@ def build_baseline_frontier(
     include_triangular: bool = True,
     include_moser_hex: bool = True,
     include_rect_grid: bool = True,
+    include_engel_2025: bool = True,
 ) -> list[dict]:
-    """Strict best-of-finite-construction frontier for u(n) at every n in [1, n_max].
+    """Best finite-construction frontier for u(n) at every n in [1, n_max].
 
     Sources (each row keeps a `source` / `family` tag for provenance):
       - `known_bounds`: literature-curated values for n in [1, 30]
+      - `engel_2025`: published densest-known beam-search values for n in [1, 100]
       - `erdos_grid`: rectangular grid sweep at every n
       - `triangular`: hex / parallelogram / strip sweep at every n
       - `moser_hex`: visible-disk Moser sweep at every n in {25, ..., n_max}
@@ -44,6 +48,9 @@ def build_baseline_frontier(
     rows: list[dict] = []
 
     rows.extend(known_bounds_rows())
+
+    if include_engel_2025:
+        rows.extend(r for r in engel_2025_rows() if int(r["n"]) <= n_max)
 
     if include_rect_grid:
         rows.extend(
@@ -66,9 +73,10 @@ def build_baseline_frontier(
 
     priority = {
         "known_bounds": 0,
-        "erdos_grid": 1,
-        "triangular": 2,
-        "moser_hex": 3,
+        "engel_2025": 1,
+        "erdos_grid": 2,
+        "triangular": 3,
+        "moser_hex": 4,
     }
 
     best: dict[int, dict] = {}

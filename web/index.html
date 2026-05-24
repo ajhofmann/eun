@@ -5,10 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>eud viewer</title>
     <style>
-      :root { color-scheme: light dark; }
-      body {
+      :root {
+        color-scheme: light;
+        --eud-bg: #f6f7fb;
+        --eud-text: #0f172a;
+        --eud-muted: #475569;
+      }
+      html, body {
         margin: 0;
+        background: var(--eud-bg);
+        color: var(--eud-text);
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      }
+      input, select, button, textarea {
+        color: inherit;
       }
     </style>
   </head>

@@ -1,0 +1,10 @@
+name: moser_ring_probe
+family: moser_ring
+params:
+  denom_power: [1]
+  coeff_bound: [2, 3, 4]
+  visible_radius: [1.5, 2.0, 2.5, 3.0]
+  window_kind: visible_disk
+prune:
+  method: greedy
+  ks: [25, 36, 49, 64, 81, 100]

@@ -1,0 +1,104 @@
+[
+  {
+    "k": 25,
+    "e": 71,
+    "params": {
+      "coeff_bound": 2,
+      "visible_radius": 2.0,
+      "window_kind": "visible_disk"
+    },
+    "seed_n": 245,
+    "seed_e": 1166,
+    "method": "local-swap",
+    "rerendered_e": 71,
+    "engel_2025_e": 72,
+    "delta_vs_engel_2025": -1,
+    "candidate_file": "data/candidates/engel_moser_probe_n25.json",
+    "image_file": "data/candidates/engel_moser_probe_n25.png"
+  },
+  {
+    "k": 36,
+    "e": 119,
+    "params": {
+      "coeff_bound": 2,
+      "visible_radius": 2.5,
+      "window_kind": "visible_disk"
+    },
+    "seed_n": 333,
+    "seed_e": 1682,
+    "method": "local-swap",
+    "rerendered_e": 119,
+    "engel_2025_e": 119,
+    "delta_vs_engel_2025": 0,
+    "candidate_file": "data/candidates/engel_moser_probe_n36.json",
+    "image_file": "data/candidates/engel_moser_probe_n36.png"
+  },
+  {
+    "k": 49,
+    "e": 178,
+    "params": {
+      "coeff_bound": 2,
+      "visible_radius": 2.5,
+      "window_kind": "visible_disk"
+    },
+    "seed_n": 333,
+    "seed_e": 1682,
+    "method": "local-swap",
+    "rerendered_e": 178,
+    "engel_2025_e": 180,
+    "delta_vs_engel_2025": -2,
+    "candidate_file": "data/candidates/engel_moser_probe_n49.json",
+    "image_file": "data/candidates/engel_moser_probe_n49.png"
+  },
+  {
+    "k": 64,
+    "e": 251,
+    "params": {
+      "coeff_bound": 2,
+      "visible_radius": 3.0,
+      "window_kind": "visible_disk"
+    },
+    "seed_n": 419,
+    "seed_e": 2196,
+    "method": "local-swap",
+    "rerendered_e": 251,
+    "engel_2025_e": 252,
+    "delta_vs_engel_2025": -1,
+    "candidate_file": "data/candidates/engel_moser_probe_n64.json",
+    "image_file": "data/candidates/engel_moser_probe_n64.png"
+  },
+  {
+    "k": 81,
+    "e": 338,
+    "params": {
+      "coeff_bound": 2,
+      "visible_radius": 3.0,
+      "window_kind": "visible_disk"
+    },
+    "seed_n": 419,
+    "seed_e": 2196,
+    "method": "local-swap",
+    "rerendered_e": 338,
+    "engel_2025_e": 338,
+    "delta_vs_engel_2025": 0,
+    "candidate_file": "data/candidates/engel_moser_probe_n81.json",
+    "image_file": "data/candidates/engel_moser_probe_n81.png"
+  },
+  {
+    "k": 100,
+    "e": 437,
+    "params": {
+      "coeff_bound": 2,
+      "visible_radius": 3.0,
+      "window_kind": "visible_disk"
+    },
+    "seed_n": 419,
+    "seed_e": 2196,
+    "method": "local-swap",
+    "rerendered_e": 437,
+    "engel_2025_e": 439,
+    "delta_vs_engel_2025": -2,
+    "candidate_file": "data/candidates/engel_moser_probe_n100.json",
+    "image_file": "data/candidates/engel_moser_probe_n100.png"
+  }
+]

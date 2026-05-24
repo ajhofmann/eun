@@ -40,6 +40,16 @@ def _build_one(family: str, params: dict[str, Any]) -> Candidate:
         from eud.families.moser import build as build_fn
 
         return build_fn(MoserParams(**params))
+    if family == "engel_moser":
+        from eud.families.engel_moser import EngelMoserParams
+        from eud.families.engel_moser import build as build_fn
+
+        return build_fn(EngelMoserParams(**params))
+    if family == "moser_ring":
+        from eud.families.moser_ring import MoserRingParams
+        from eud.families.moser_ring import build as build_fn
+
+        return build_fn(MoserRingParams(**params))
     if family == "cyclotomic":
         from eud.families.cyclotomic import CyclotomicParams
         from eud.families.cyclotomic import build as build_fn

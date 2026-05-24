@@ -1,1 +1,1 @@
-"""Construction families: erdos_grid, moser, cyclotomic, biquadratic, generic cut_project."""
+"""Construction families: erdos_grid, moser, engel_moser, moser_ring, cyclotomic, biquadratic."""

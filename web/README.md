@@ -16,6 +16,15 @@ npm run dev
 Then open http://127.0.0.1:5173/ and load a candidate JSON path like
 `/candidates/zeta5_R2.5.json`.
 
+For the interactive construction explorer, also start the local generation API
+from the repository root in a second terminal:
+
+```bash
+uv run eud-api
+```
+
+The Vite dev server proxies `/api/*` to `http://127.0.0.1:8000`.
+
 This stub is intentionally lightweight: one route, one component, no math
 in the frontend. Extend with frontier plot, candidate table, and certificate
 viewer as needed.

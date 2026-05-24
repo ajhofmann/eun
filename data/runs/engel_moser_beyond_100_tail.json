@@ -1,0 +1,90 @@
+[
+  {
+    "k": 225,
+    "e": 1161,
+    "engel_2025_e": null,
+    "delta_vs_engel_2025": null,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0
+    },
+    "search": {
+      "starts": 5,
+      "perturb_rounds": 8,
+      "best_e": 1161,
+      "beam": {
+        "width": 4,
+        "rounds": 2,
+        "max_additions_per_state": 6,
+        "drop_branches": 2,
+        "rounds_completed": 2,
+        "states_seen": 12,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 1161,
+            "beam_best_e": 1161,
+            "states_seen": 7
+          },
+          {
+            "round": 2,
+            "best_e": 1161,
+            "beam_best_e": 1161,
+            "states_seen": 12
+          }
+        ],
+        "seed_e": 1161,
+        "best_e": 1161,
+        "wall_time_s": 2.5020039081573486
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n225.json",
+    "image_file": "data/candidates/engel_moser_beyond_n225.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n225_cert.jsonl"
+  },
+  {
+    "k": 289,
+    "e": 1572,
+    "engel_2025_e": null,
+    "delta_vs_engel_2025": null,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0
+    },
+    "search": {
+      "starts": 5,
+      "perturb_rounds": 8,
+      "best_e": 1572,
+      "beam": {
+        "width": 4,
+        "rounds": 2,
+        "max_additions_per_state": 6,
+        "drop_branches": 2,
+        "rounds_completed": 2,
+        "states_seen": 19,
+        "best_by_round": [
+          {
+            "round": 1,
+            "best_e": 1572,
+            "beam_best_e": 1572,
+            "states_seen": 7
+          },
+          {
+            "round": 2,
+            "best_e": 1572,
+            "beam_best_e": 1572,
+            "states_seen": 19
+          }
+        ],
+        "seed_e": 1572,
+        "best_e": 1572,
+        "wall_time_s": 3.273344039916992
+      }
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n289.json",
+    "image_file": "data/candidates/engel_moser_beyond_n289.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n289_cert.jsonl"
+  }
+]

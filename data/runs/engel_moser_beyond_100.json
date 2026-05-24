@@ -1,0 +1,128 @@
+[
+  {
+    "k": 121,
+    "e": 557,
+    "density": 4.603305785123967,
+    "published_baseline_e": 400,
+    "delta_vs_published_baseline": 157,
+    "reproducible_baseline_e": 400,
+    "delta_vs_reproducible_baseline": 157,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.5,
+      "induced_from_n": 725,
+      "beam_target_k": 121,
+      "beam_width": 6,
+      "beam_rounds": 3
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n121.json",
+    "image_file": "data/candidates/engel_moser_beyond_n121.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n121_cert.jsonl"
+  },
+  {
+    "k": 144,
+    "e": 692,
+    "density": 4.805555555555555,
+    "published_baseline_e": 478,
+    "delta_vs_published_baseline": 214,
+    "reproducible_baseline_e": 478,
+    "delta_vs_reproducible_baseline": 214,
+    "params": {
+      "coeff_bound": 2,
+      "window_kind": "visible_disk",
+      "visible_radius": 2.75,
+      "induced_from_n": 373,
+      "beam_target_k": 144,
+      "beam_width": 6,
+      "beam_rounds": 3
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n144.json",
+    "image_file": "data/candidates/engel_moser_beyond_n144.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n144_cert.jsonl"
+  },
+  {
+    "k": 169,
+    "e": 835,
+    "density": 4.940828402366864,
+    "published_baseline_e": 577,
+    "delta_vs_published_baseline": 258,
+    "reproducible_baseline_e": 577,
+    "delta_vs_reproducible_baseline": 258,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0,
+      "induced_from_n": 987,
+      "beam_target_k": 169,
+      "beam_width": 6,
+      "beam_rounds": 3
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n169.json",
+    "image_file": "data/candidates/engel_moser_beyond_n169.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n169_cert.jsonl"
+  },
+  {
+    "k": 196,
+    "e": 994,
+    "density": 5.071428571428571,
+    "published_baseline_e": 696,
+    "delta_vs_published_baseline": 298,
+    "reproducible_baseline_e": 696,
+    "delta_vs_reproducible_baseline": 298,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0,
+      "induced_from_n": 987,
+      "beam_target_k": 196,
+      "beam_width": 6,
+      "beam_rounds": 3
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n196.json",
+    "image_file": "data/candidates/engel_moser_beyond_n196.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n196_cert.jsonl"
+  },
+  {
+    "k": 225,
+    "e": 1161,
+    "density": 5.16,
+    "published_baseline_e": 801,
+    "delta_vs_published_baseline": 360,
+    "reproducible_baseline_e": 801,
+    "delta_vs_reproducible_baseline": 360,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0,
+      "induced_from_n": 987,
+      "beam_target_k": 225,
+      "beam_width": 4,
+      "beam_rounds": 2
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n225.json",
+    "image_file": "data/candidates/engel_moser_beyond_n225.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n225_cert.jsonl"
+  },
+  {
+    "k": 289,
+    "e": 1572,
+    "density": 5.439446366782007,
+    "published_baseline_e": 1096,
+    "delta_vs_published_baseline": 476,
+    "reproducible_baseline_e": 1096,
+    "delta_vs_reproducible_baseline": 476,
+    "params": {
+      "coeff_bound": 3,
+      "window_kind": "visible_disk",
+      "visible_radius": 3.0,
+      "induced_from_n": 987,
+      "beam_target_k": 289,
+      "beam_width": 6,
+      "beam_rounds": 3
+    },
+    "candidate_file": "data/candidates/engel_moser_beyond_n289.json",
+    "image_file": "data/candidates/engel_moser_beyond_n289.png",
+    "certificate_file": "data/verified/engel_moser_beyond_n289_cert.jsonl"
+  }
+]
