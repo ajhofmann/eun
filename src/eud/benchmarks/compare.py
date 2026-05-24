@@ -17,7 +17,6 @@ from pathlib import Path
 from eud.benchmarks.known_bounds import known_bounds_rows
 from eud.benchmarks.score import Frontier
 from eud.core.io import read_jsonl, write_jsonl
-from eud.families.erdos_grid import sweep_frontier as grid_sweep
 from eud.families.erdos_grid import sweep_frontier_rect as grid_sweep_rect
 
 

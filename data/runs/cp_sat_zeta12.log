@@ -1,5 +1,53 @@
 Building seed: cyclotomic m=12 cb=4 R=3.0 ball window...
-  seed: n=1767 e=7824 density=4.428 (0.1s)
+  seed: n=1767 e=7824 density=4.428 (0.0s)
 
 === k=25 ===
   greedy_peel: e=70 density=2.800 (0.1s)
+  local_swap: e=70 density=2.800 (10.7s)
+  CP-SAT on shrunk_seed n=100 e=369 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=68 status=FEASIBLE bound=369 optimal=False (30.3s)
+  best: greedy e=70 (greedy=70, ls=70, cp_sat=68)
+
+=== k=36 ===
+  greedy_peel: e=111 density=3.083 (0.1s)
+  local_swap: e=111 density=3.083 (10.7s)
+  CP-SAT on shrunk_seed n=144 e=547 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=97 status=FEASIBLE bound=547 optimal=False (30.0s)
+  best: greedy e=111 (greedy=111, ls=111, cp_sat=97)
+
+=== k=49 ===
+  greedy_peel: e=168 density=3.429 (0.1s)
+  local_swap: e=168 density=3.429 (11.0s)
+  CP-SAT on shrunk_seed n=196 e=770 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=149 status=FEASIBLE bound=770 optimal=False (30.0s)
+  best: greedy e=168 (greedy=168, ls=168, cp_sat=149)
+
+=== k=64 ===
+  greedy_peel: e=223 density=3.484 (0.1s)
+  local_swap: e=223 density=3.484 (11.1s)
+  CP-SAT on shrunk_seed n=256 e=992 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=171 status=FEASIBLE bound=992 optimal=False (30.0s)
+  best: greedy e=223 (greedy=223, ls=223, cp_sat=171)
+
+=== k=81 ===
+  greedy_peel: e=291 density=3.593 (0.1s)
+  local_swap: e=291 density=3.593 (11.4s)
+  CP-SAT on shrunk_seed n=324 e=1293 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=220 status=FEASIBLE bound=1293 optimal=False (30.0s)
+  best: greedy e=291 (greedy=291, ls=291, cp_sat=220)
+
+=== k=100 ===
+  greedy_peel: e=369 density=3.690 (0.1s)
+  local_swap: e=369 density=3.690 (12.8s)
+  CP-SAT on shrunk_seed n=400 e=1651 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=277 status=FEASIBLE bound=1651 optimal=False (30.0s)
+  best: greedy e=369 (greedy=369, ls=369, cp_sat=277)
+
+=== k=121 ===
+  greedy_peel: e=453 density=3.744 (0.1s)
+  local_swap: e=453 density=3.744 (11.0s)
+  CP-SAT on shrunk_seed n=484 e=2025 (time_limit=30.0s, 1 worker)...
+  CP-SAT: e=369 status=FEASIBLE bound=2025 optimal=False (30.0s)
+  best: greedy e=453 (greedy=453, ls=453, cp_sat=369)
+
+Done. Wrote data/runs/cp_sat_zeta12.jsonl

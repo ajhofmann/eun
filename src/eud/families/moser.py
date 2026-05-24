@@ -241,7 +241,7 @@ def sweep_frontier(
     """
     from eud.search.prune import greedy_peel
 
-    cache: dict[tuple[int, float], "Candidate"] = {}
+    cache: dict[tuple[int, float], Candidate] = {}
     for zo in zeta_orders:
         for r in radius_grid:
             cand = build_in_visible_disk(

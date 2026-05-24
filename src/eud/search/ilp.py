@@ -29,6 +29,7 @@ class CPSATConfig:
     workers: int = 8
     seed: int = 0
     log_search: bool = False
+    symmetry_level: int = 0  # 0 disables symmetry presolve (otherwise gets stuck on large symmetric graphs)
 
 
 def cp_sat_densest_k(
@@ -70,6 +71,7 @@ def cp_sat_densest_k(
     solver.parameters.num_search_workers = config.workers
     solver.parameters.random_seed = config.seed
     solver.parameters.log_search_progress = config.log_search
+    solver.parameters.symmetry_level = config.symmetry_level
 
     status = solver.Solve(model)
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):

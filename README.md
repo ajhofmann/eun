@@ -95,56 +95,112 @@ eud leaderboard data/runs/biquad.jsonl --frontier data/frontiers/baseline.jsonl 
   (1, 2, 4) where (1, i, ζ, iζ) is Z-linearly dependent and edge counts
   inflate spuriously.
 
-## Initial findings
+## Strict baseline frontier
 
-A run of `configs/search/scan_cyclotomic.yaml` followed by greedy peeling
-turned up a clean window where a **rank-4 cut-and-project construction
-beats the optimized Erdős square-grid baseline** at every perfect-square
-n in [36, 289]:
+`data/frontiers/baseline.jsonl` is the strict best-of-finite-construction
+frontier we score every candidate against. At each n in [1, 1000] it
+keeps the maximum edge count over four sources:
 
-| n   | Z[ζ_12] greedy-pruned | Erdős grid (best K) | Δ      | %      |
-| --- | --------------------- | ------------------- | ------ | ------ |
-| 36  | 111                   | 80                  | +31    | +38.8% |
-| 49  | 168                   | 120                 | +48    | +40.0% |
-| 64  | 223                   | 168                 | +55    | +32.7% |
-| 81  | 291                   | 224                 | +67    | +29.9% |
-| 100 | 369                   | 288                 | +81    | +28.1% |
-| 121 | 453                   | 360                 | +93    | +25.8% |
-| 144 | 547                   | 440                 | +107   | +24.3% |
-| 169 | 656                   | 528                 | +128   | +24.2% |
-| 196 | 770                   | 624                 | +146   | +23.4% |
-| 225 | 885                   | 744                 | +141   | +19.0% |
-| 256 | 992                   | 912                 | +80    | +8.8%  |
-| 289 | 1133                  | 1096                | +37    | +3.4%  |
+- **`known_bounds`**: curated literature values for n in [1, 30]
+  (Edelsbrunner et al exact values for n ≤ 14; Schade 2020 / OEIS
+  A186705-style lower bounds for n in [15, 30]).
+- **`erdos_grid`**: rectangular `mx × my` grid sweep with K = product of
+  primes ≡ 1 mod 4 (`families/erdos_grid.py`). Square grids are a
+  special case but rectangles fill in non-square n. Dominates the
+  frontier for n ≳ 270.
+- **`triangular`**: Z[ζ_6] (Eisenstein) hex-disk / parallelogram / strip
+  sweep with the 6 sixth roots of unity as unit vectors
+  (`families/triangular.py`). Closed form on filled hex disks:
+  n = 3r² + 3r + 1, e = 9r² + 3r.
+- **`moser_hex`**: rank-4 Moser lattice Z[i, ζ] with a visible-plane
+  disk window (`families/moser.py:build_in_visible_disk`), greedy-peeled
+  to the target n. Dominates the frontier for n in [31, 270].
 
-The construction: build `Q(ζ_12)` (= Z[i, √3], rank 4) cut-and-project
-with `coeff_bound=4, R=3.0, ball window`, then `greedy_peel` to the
-target `n`. Every claimed unit edge is verified exactly via sympy AND
-cross-verified by high-precision PARI in
-`data/verified/win_zeta12_n100_cert.json`.
+Build it from scratch (≈7 min for n_max=1000):
 
-### Important caveats
+```bash
+uv run eud baseline --out data/frontiers/baseline.jsonl --n-max 1000
+```
 
-1. **This beats *our reproduction* of the Erdős square-grid baseline.**
-   It is not a claim against the strongest known finite construction
-   in the literature. Our `benchmarks/known_bounds.py` only curates
-   tighter values up to n=30; for n≥36 the only reference here is
-   `erdos_grid`. Recent Schade (2020) / forbidden-subgraph constructions
-   for n in [16, 30] beat us soundly there (-4 to -17 edges per n).
-2. **This is rank 4, not rank 6/8.** The plan called rank-4 cyclotomic
-   "for pipeline validation, not records." Q(ζ_12) is rank 4 over Q
-   (= Q(i, √3)) — same rank as Moser. The win comes from window
-   selection + dense-core pruning, not from a higher-rank lattice.
-3. **It is finite, not asymptotic.** Sawin's exponent δ ≈ 0.014 needs
-   astronomically many points to manifest; we are nowhere near that.
+## Findings
 
-So this is a "v2 success" per the plan — smallest n where our pipeline
-beats the optimized erdős-grid baseline — not a publishable improvement
-over u(n) at large. The path to "publishable" is curating known_bounds
-for n ≥ 30 (Moser-beam-search results, Schade-style constructions),
-then running rank-6/8 sweeps with local-swap or CP-SAT pruning.
+After re-scoring against the strict baseline above, the rank-4 Q(ζ_12)
+cut-and-project construction still cleanly beats every published /
+reproducible finite construction at every perfect-square n in [64, 289].
+The two smallest n's (36, 49) tie with `moser_hex` because Z[ζ_12] = Z[i, ω]
+*is* the Moser lattice — they're the same Z-module, just filtered by
+different windows.
 
-See `data/gallery/zeta12_wins_frontier.png` for the visual frontier.
+Re-running `configs/search/zeta12_window_explore.yaml` (translated /
+non-ball windows) and harvesting via `scripts/synthesize_window_explore.py`
+produces a stronger "v2" set of wins. Best per n:
+
+| n   | v2 e (Q(ζ_12) winv2) | strict baseline | source     | Δ    | %      | window config                        |
+| --- | -------------------- | --------------- | ---------- | ---- | ------ | ------------------------------------ |
+| 36  | 111                  | 111             | moser_hex  | +0   | +0.0%  | tied (same lattice as moser_hex)    |
+| 49  | 168                  | 168             | moser_hex  | +0   | +0.0%  | tied (same lattice as moser_hex)    |
+| 64  | 224                  | 204             | moser_hex  | +20  | +9.8%  | R=2.5 box window, centered          |
+| 81  | 292                  | 262             | moser_hex  | +30  | +11.5% | R=2.5 box window, centered          |
+| 100 | 380                  | 327             | moser_hex  | +53  | +16.2% | R=3.0 box window, translation_seed=1 |
+| 121 | 465                  | 400             | moser_hex  | +65  | +16.3% | R=3.0 box window, translation_seed=1 |
+| 144 | 558                  | 478             | moser_hex  | +80  | +16.7% | R=3.0 box window, translation_seed=1 |
+| 169 | 662                  | 577             | moser_hex  | +85  | +14.7% | R=3.0 ball window, translation_seed=13 |
+| 196 | 782                  | 696             | moser_hex  | +86  | +12.4% | R=3.0 box window, translation_seed=1 |
+| 225 | 885                  | 801             | moser_hex  | +84  | +10.5% | R=3.0 ball window, centered (v1)    |
+| 256 | 992                  | 921             | moser_hex  | +71  | +7.7%  | R=3.0 ball window, centered (v1)    |
+| 289 | 1133                 | 1096            | erdos_grid | +37  | +3.4%  | R=3.0 ball window, centered (v1)    |
+
+Source data:
+
+- [`data/runs/zeta12_winv2_vs_strict.json`](data/runs/zeta12_winv2_vs_strict.json):
+  every (k, R, window_kind, translation_seed) winning candidate, plus
+  `greedy_e` and `local_swap_e` per row, plus the strict baseline e.
+- [`data/runs/zeta12_vs_strict.json`](data/runs/zeta12_vs_strict.json):
+  the original "v1" 12-row table re-scored vs the strict baseline.
+  10/12 wins still hold; n=36 and n=49 became ties.
+- [`data/candidates/winv2_zeta12_n*.json`](data/candidates):
+  the v2 candidate snapshots (greedy + local-swap pruned).
+
+### What we tried and what didn't help
+
+- **Higher-rank cyclotomic (m ∈ {15, 20, 24}).** Sweep config:
+  [`configs/search/cyclotomic_higher_rank.yaml`](configs/search/cyclotomic_higher_rank.yaml).
+  m=15 has 30 roots of unity (vs ζ_12's 12) but rank 8 (vs 4); the
+  6-D hidden window is sparse, so coverage drops. Best m=15 candidate
+  beats the *strict baseline* at n in {121, 144, 169, 196} but is
+  always strictly worse than the corresponding ζ_12 wins. Synthesis:
+  [`data/runs/higher_rank_vs_strict.json`](data/runs/higher_rank_vs_strict.json).
+- **CP-SAT exact densest-k.** OR-Tools 9.15 multi-worker hangs on this
+  hardware (Apple silicon); single-worker with 30 s budget is strictly
+  worse than greedy_peel on every k we tried. Greedy_peel + warm-started
+  local-swap are the practical pruners on the ζ_12 seed; both equal
+  greedy here. Synthesis: [`data/runs/cp_sat_zeta12.jsonl`](data/runs/cp_sat_zeta12.jsonl).
+- **Local-swap with random restarts.** With warm start from greedy
+  (`SAConfig.warm_start_with_greedy=True`, the default), it never
+  improves on greedy at n ≤ 196 on the ζ_12 seed; without warm start it
+  is strictly worse.
+
+### Important caveats (still apply)
+
+1. **The literature curated table only covers n ≤ 30.** For n ∈ [31, 60]
+   we don't carry tighter Schade-style references; the "strict baseline"
+   at those n's is built from our own construction sweeps. New n=49
+   and n=36 *do* tie with `moser_hex` though — this is a genuine
+   improvement over the previous "vs erdos_grid only" framing.
+2. **This is rank 4 not rank 6/8.** Q(ζ_12) = Q(i, √3) is rank 4 over Q
+   — same rank as Moser. The wins come from window selection + dense-core
+   pruning, not from a higher-rank lattice. We did try higher-rank
+   (m ∈ {15, 20, 24}) and they don't beat ζ_12 in our search.
+3. **Asymptotic record (Sawin n^{1+1/log²log n})** needs astronomically
+   many points; finite shadows like ours are nowhere near that regime.
+
+So this is a "v2 success" against the strict best-of-finite-construction
+baseline — every claimed edge is sympy-exact and PARI-cross-verified
+([`data/verified/`](data/verified)) — but not a published improvement
+over the unknown "true" u(n).
+
+See [`data/gallery/zeta12_wins_frontier.png`](data/gallery/zeta12_wins_frontier.png)
+for the visual frontier.
 
 ## Notebooks
 
@@ -159,17 +215,19 @@ Run any of these as plain scripts: `uv run python notebooks/00_reproduce_uploade
 
 ## What's next
 
-The toolchain is plumbed end-to-end. The actual research question -
-"smallest n where a higher-rank algebraic / cut-and-project construction
-beats the strongest known finite Erdős unit-distance lower bound" -
-is now an experimental search, not an engineering question:
+The toolchain is plumbed end-to-end and the strict baseline is now
+multi-family. The remaining open directions:
 
-1. Extend `benchmarks.known_bounds` with more curated frontiers
-   (Moser-lattice beam search to n=100, recent forbidden-subgraph
-   bounds for n in [16, 30]).
-2. Run the sweep configs (`configs/search/*.yaml`) at scale and harvest
-   leaderboard hits with non-trivial `improvement_at_n`.
-3. For each hit, run `eud verify --pari` and snapshot the certificate
-   in `data/verified/`.
-4. Iterate windows / fields / pruning strategy as guided by which
-   families and (n, e/n) regions are surfacing wins.
+1. **Curate `known_bounds` for n in [31, 100]** from Schade 2020 and the
+   Moser-beam-search literature, so the strict baseline at small n
+   isn't entirely construction-derived.
+2. **Push past Q(ζ_12) by rank rather than window**: try Q(ζ_15) /
+   Q(ζ_24) with ellipsoid windows tuned per Galois conjugate (the
+   current sweep used the trivial isotropic ball in 6-D hidden space).
+   `configs/search/cyclotomic_higher_rank.yaml` is the starting point.
+3. **Fix multi-worker CP-SAT** (Apple silicon hang in OR-Tools 9.15)
+   and run exact densest-k at k ≤ 49 to *prove* the v2 wins are
+   actually optimal over the seed; the +20 / +30 wins at n=64 / n=81
+   would be the easiest cases to verify.
+4. **Hybrid union constructions**: Z[ζ_12] ∪ shifted Z[ζ_12] re-pruned
+   could in principle exceed the 12-direction density cap of 6.

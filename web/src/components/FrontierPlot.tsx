@@ -15,9 +15,11 @@ interface Props {
 }
 
 const COLORS: Record<string, string> = {
-  known_bounds: "#f59e0b",
-  erdos_grid: "#3b82f6",
-  cyclotomic: "#10b981",
+  known_bounds: "#444444",
+  erdos_grid: "#1f77b4",
+  triangular: "#2ca02c",
+  moser_hex: "#d62728",
+  cyclotomic: "#ff8800",
   moser: "#8b5cf6",
   biquadratic: "#ef4444",
 };

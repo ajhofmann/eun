@@ -24,10 +24,11 @@ class SAConfig:
     start_temp: float = 2.0
     end_temp: float = 0.01
     restarts: int = 1
+    warm_start_with_greedy: bool = True
 
 
 def _initial_subset(adj: list[set[int]], k: int, rng: random.Random) -> set[int]:
-    """Greedy initial subset: highest-degree vertices."""
+    """Random initial subset weighted by degree: highest-degree top 2k pool."""
     n = len(adj)
     if k >= n:
         return set(range(n))
@@ -38,6 +39,26 @@ def _initial_subset(adj: list[set[int]], k: int, rng: random.Random) -> set[int]
     chosen = list(base)
     rng.shuffle(chosen)
     return set(chosen[:k])
+
+
+def _greedy_subset(adj: list[set[int]], k: int) -> set[int]:
+    """Greedy peel result as a set, deterministic. Mirrors prune.greedy_peel.
+
+    Repeatedly drop the lowest-degree remaining vertex until k remain.
+    """
+    n = len(adj)
+    if k >= n:
+        return set(range(n))
+    alive = set(range(n))
+    deg = {i: len(adj[i]) for i in alive}
+    while len(alive) > k:
+        worst = min(alive, key=lambda v: (deg[v], v))
+        for u in adj[worst]:
+            if u in deg:
+                deg[u] -= 1
+        alive.discard(worst)
+        del deg[worst]
+    return alive
 
 
 def _internal_edges(S: set[int], adj: list[set[int]]) -> int:
@@ -81,9 +102,20 @@ def local_swap(
     best_S: set[int] = set()
     best_e = -1
 
-    for _ in range(max(1, config.restarts)):
-        S = _initial_subset(adj, k, rng)
-        cur_e = _internal_edges(S, adj)
+    if config.warm_start_with_greedy:
+        greedy_S = _greedy_subset(adj, k)
+        greedy_e = _internal_edges(greedy_S, adj)
+        if greedy_e > best_e:
+            best_S = set(greedy_S)
+            best_e = greedy_e
+
+    for restart in range(max(1, config.restarts)):
+        if config.warm_start_with_greedy and restart == 0:
+            S = set(greedy_S)
+            cur_e = greedy_e
+        else:
+            S = _initial_subset(adj, k, rng)
+            cur_e = _internal_edges(S, adj)
 
         for it in range(config.max_iters):
             t = max(

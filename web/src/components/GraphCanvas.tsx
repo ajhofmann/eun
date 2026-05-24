@@ -13,6 +13,7 @@ export interface Candidate {
   density: number;
   points: Point[];
   edges: [number, number][];
+  unit_vectors?: number[][];
 }
 
 interface Props {
