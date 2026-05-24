@@ -1,0 +1,15 @@
+name: zeta12_window_explore
+# Sweep window shape and translation on the existing zeta_12 win seed.
+# The current "win" candidates use a centered ball window with R=3.0,
+# coeff_bound=4. Test whether shifting the window or changing its shape
+# yields denser k-induced subgraphs.
+family: cyclotomic
+params:
+  m: 12
+  coeff_bound: 4
+  R: [2.5, 3.0, 3.5]
+  window_kind: [ball, ellipsoid, box, zonotope]
+  translation_seed: [null, 1, 7, 13, 42]
+prune:
+  method: greedy
+  ks: [49, 64, 81, 100, 121, 144, 169, 196]

@@ -1,0 +1,11 @@
+name: rank4_moser_pipeline_shakedown
+family: moser
+params:
+  zeta_order: [6, 12]
+  coeff_bound: [2, 3]
+prune:
+  method: local-swap
+  ks: [25, 50, 75, 100, 150, 200, 300]
+  iters: 5000
+  restarts: 2
+  seed: 0

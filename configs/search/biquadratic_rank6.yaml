@@ -1,0 +1,22 @@
+name: biquadratic_rank4_to_8_probe
+# NOTE on naming: the original plan called this "rank 6" but multiquadratic
+# fields jump in powers of 2: Q(i, sqrt(p_1)) is rank 4, Q(i, sqrt(p_1),
+# sqrt(p_2)) is rank 8. We probe both.
+family: biquadratic
+params:
+  primes:
+    - [3]
+    - [5]
+    - [11]
+    - [3, 5]
+    - [3, 7]
+    - [3, 11]
+    - [5, 11]
+  coeff_bound: [1, 2]
+  R: [1.0, 1.5, 2.0]
+  window_kind: ball
+prune:
+  method: local-swap
+  ks: [25, 50, 100, 150, 200]
+  iters: 5000
+  restarts: 2

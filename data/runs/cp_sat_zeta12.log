@@ -1,0 +1,5 @@
+Building seed: cyclotomic m=12 cb=4 R=3.0 ball window...
+  seed: n=1767 e=7824 density=4.428 (0.1s)
+
+=== k=25 ===
+  greedy_peel: e=70 density=2.800 (0.1s)

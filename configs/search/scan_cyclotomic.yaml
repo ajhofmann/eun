@@ -1,0 +1,10 @@
+name: scan_cyclotomic
+family: cyclotomic
+params:
+  m: [5, 7, 8, 12]
+  coeff_bound: [4, 5]
+  R: [1.5, 2.0, 2.5, 3.0]
+  window_kind: ball
+prune:
+  method: greedy
+  ks: [50, 100, 150, 200, 300, 500, 700, 900]

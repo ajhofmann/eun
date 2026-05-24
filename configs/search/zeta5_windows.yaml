@@ -1,0 +1,14 @@
+name: zeta5_window_sweep
+family: cyclotomic
+params:
+  m: 5
+  coeff_bound: [4, 5, 6, 7]
+  R: [1.5, 1.8, 2.1, 2.4, 2.7, 3.0]
+  window_kind: [ball, ellipsoid]
+  translation_seed: [null, 1, 7, 42]
+prune:
+  method: local-swap
+  ks: [50, 75, 100, 150, 200, 300, 500]
+  iters: 8000
+  restarts: 3
+  seed: 0

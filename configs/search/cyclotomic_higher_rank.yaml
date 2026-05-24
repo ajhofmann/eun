@@ -1,0 +1,22 @@
+name: cyclotomic_higher_rank
+# Push beyond the rank-4 zeta_12 wins: try rank-8 cyclotomic fields with
+# more roots of unity (= more unit-distance directions per vertex).
+#   Q(zeta_15): 30 roots of unity, hidden dim 6
+#   Q(zeta_20): 20 roots of unity, hidden dim 6
+#   Q(zeta_24): 24 roots of unity, hidden dim 6
+# coeff_bound=2 keeps the rank-8 box at 5^8 = 390k tuples (~2 s/build).
+# Ball window in 6-D is sparse, so we sweep R in [2.0, 2.5] and a couple
+# of translations.
+family: cyclotomic
+params:
+  m: [15, 20, 24]
+  coeff_bound: 2
+  R: [2.0, 2.5]
+  window_kind: ball
+  translation_seed: [null, 7]
+prune:
+  method: local-swap
+  ks: [25, 36, 49, 64, 81, 100, 121, 144, 169, 196]
+  iters: 8000
+  restarts: 3
+  seed: 0

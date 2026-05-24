@@ -1,0 +1,8 @@
+name: moser_box_smoke
+family: moser
+params:
+  zeta_order: [3, 6, 12]  # 4 excluded: ζ_4=i makes basis Z-dependent
+  coeff_bound: [1, 2]
+prune:
+  method: greedy
+  ks: [25, 50, 100]

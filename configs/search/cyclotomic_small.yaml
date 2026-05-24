@@ -1,0 +1,12 @@
+name: cyclotomic_small_m
+family: cyclotomic
+params:
+  m: [7, 8, 12]
+  coeff_bound: [3, 4, 5]
+  R: [1.5, 2.0, 2.5, 3.0]
+  window_kind: [ball, ellipsoid]
+prune:
+  method: local-swap
+  ks: [50, 100, 150, 200, 300]
+  iters: 5000
+  restarts: 2

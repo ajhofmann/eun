@@ -1,0 +1,64 @@
+[project]
+name = "eud"
+version = "0.1.0"
+description = "Erdős unit-distance search: cut-and-project constructions and exact certification"
+authors = [{ name = "Adam Hofmann", email = "ajhofmann18@gmail.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.11",
+    "networkx>=3.2",
+    "matplotlib>=3.8",
+    "pandas>=2.1",
+    "pydantic>=2.5",
+    "typer>=0.12",
+    "rich>=13.7",
+    "orjson>=3.9",
+    "pyarrow>=15.0",
+    "tqdm>=4.66",
+    "pyyaml>=6.0",
+    "ortools>=9.8",
+    "sympy>=1.12",
+    "cypari2>=2.2.2",
+]
+
+[project.optional-dependencies]
+pari = ["cypari2>=2.1"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "ipykernel>=6.29",
+]
+
+[project.scripts]
+eud = "eud.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "W"]
+ignore = ["E501", "N803", "N806"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/eud/cli.py" = ["B008"]
+"src/eud/**/cli.py" = ["B008"]
+"src/eud/families/erdos_grid.py" = ["N802"]
+"tests/**.py" = ["N802", "N803"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
