@@ -27,6 +27,10 @@ ln -sf ../../data/gallery public/gallery
 ln -sf ../../data/runs public/runs
 ```
 
+These symlinks must stay **untracked** and use **relative** paths like above.
+Do not commit absolute paths (e.g. `/Users/...`); GitHub clones will break and
+they leak your local username.
+
 Rebuild the candidate manifest after adding or changing showcase JSON:
 
 ```bash

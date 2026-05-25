@@ -41,6 +41,12 @@ web/node_modules/
 web/dist/
 web/.vite/
 
+# Local dev symlinks only — use relative targets from web/ (see web/README.md)
+web/public/candidates
+web/public/frontiers
+web/public/gallery
+web/public/runs
+
 .DS_Store
 .idea/
 .vscode/
