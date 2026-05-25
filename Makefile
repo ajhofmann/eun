@@ -1,4 +1,4 @@
-.PHONY: install test lint typecheck smoke-moser smoke-zeta5 baseline sweep leaderboard web-dev web-build refresh-manifest clean
+.PHONY: install test lint typecheck smoke-moser smoke-zeta5 baseline sweep leaderboard web-dev web-build refresh-manifest pages-bundle pages-build clean
 
 install:
 	uv sync --all-extras --dev
@@ -49,6 +49,12 @@ web-dev:
 
 web-build:
 	cd web && npm run build
+
+pages-bundle:
+	python3 scripts/export_near545_demo.py
+
+pages-build: pages-bundle
+	cd web && VITE_PAGES_MODE=true VITE_BASE=/eun/ npm run build
 
 clean:
 	rm -rf .pytest_cache .ruff_cache .mypy_cache build dist *.egg-info

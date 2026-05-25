@@ -15,6 +15,19 @@ build/
 .coverage
 htmlcov/
 
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.pypirc
+.netrc
+credentials.json
+service-account*.json
+
 data/candidates/*.json
 data/candidates/*.jsonl
 data/raw/*.json

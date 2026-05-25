@@ -52,6 +52,11 @@ See [`web/README.md`](web/README.md). After generating data, symlink
 `make refresh-manifest`, then `make web-dev`. For live generation in the
 **explorer** tab, also run `uv run eud-api` in a second terminal.
 
+### GitHub Pages
+
+Static three-graph explorer (near n=545): **https://ajhofmann.github.io/eun/**.
+Build with `make pages-build`; see [`web/README.md`](web/README.md).
+
 ## CLI
 
 ```bash
