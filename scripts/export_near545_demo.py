@@ -38,26 +38,34 @@ def main() -> None:
     args = parser.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    missing: list[str] = []
+    missing_both: list[str] = []
     for src, dest_name in COPY_MAP:
-        if not src.is_file():
-            missing.append(str(src.relative_to(REPO)))
-            continue
         dest = OUT_DIR / dest_name
-        shutil.copy2(src, dest)
-        print(f"copied {dest.relative_to(REPO)}")
+        if src.is_file():
+            shutil.copy2(src, dest)
+            print(f"copied {dest.relative_to(REPO)}")
+            continue
+        if dest.is_file():
+            print(f"using committed {dest.relative_to(REPO)}")
+            continue
+        missing_both.append(dest_name)
 
-    if missing:
+    if missing_both:
         raise SystemExit(
-            "missing source candidate JSON (generate locally first):\n  "
-            + "\n  ".join(missing)
+            "missing demo JSON (commit web/public/demo/near545/ or generate "
+            "data/candidates and re-run):\n  "
+            + "\n  ".join(missing_both)
         )
 
     if args.hero:
-        if not HERO_SRC.is_file():
+        hero_dest = OUT_DIR / "hero.png"
+        if HERO_SRC.is_file():
+            shutil.copy2(HERO_SRC, hero_dest)
+            print(f"copied {hero_dest.relative_to(REPO)}")
+        elif hero_dest.is_file():
+            print(f"using committed {hero_dest.relative_to(REPO)}")
+        else:
             raise SystemExit(f"missing hero PNG: {HERO_SRC}")
-        shutil.copy2(HERO_SRC, OUT_DIR / "hero.png")
-        print(f"copied {OUT_DIR / 'hero.png'}")
 
     print(f"done — demo bundle in {OUT_DIR.relative_to(REPO)}")
 
