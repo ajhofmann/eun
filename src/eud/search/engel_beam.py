@@ -367,11 +367,18 @@ def beam_search(
 
         if not children:
             break
-        ranked = sorted(children.values(), key=lambda s: (-s.score, -s.edges, s.key))
-        beam = ranked[: config.width]
-        round_best = max(beam, key=lambda s: (s.edges, s.score))
+        # Retain beam breadth by score, but never discard the densest child states.
+        # Visit penalties can rank a 252-edge state below a 249-edge state and caused
+        # the n=64 Engel reproduction miss when only `beam[:width]` updated `best`.
+        child_list = list(children.values())
+        round_best = max(child_list, key=lambda s: (s.edges, s.score, s.key))
         if (round_best.edges, round_best.score) > (best.edges, best.score):
             best = round_best
+        ranked = sorted(child_list, key=lambda s: (-s.score, -s.edges, s.key))
+        beam = ranked[: config.width]
+        if round_best.key not in {s.key for s in beam}:
+            beam[-1] = round_best
+            beam.sort(key=lambda s: (-s.score, -s.edges, s.key))
         rounds_completed = round_idx + 1
         best_by_round.append(
             {

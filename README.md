@@ -18,7 +18,9 @@ satisfying *small* witness, with an exact-arithmetic certificate.
 - `src/eud/core/` - lattice points, candidates, edge counting, IO,
   exact algebra, certificates.
 - `src/eud/families/` - construction families: `erdos_grid`, `moser`,
-  `cyclotomic`, `biquadratic`, generic `cut_project`, `pari_fields`.
+  `engel_moser`, `moser_ring`, `triangular`, `cyclotomic`, `biquadratic`,
+  plus generic `cut_project`. `pari_fields` backs PARI cross-checks in
+  `eud verify`, not `eud generate`.
 - `src/eud/search/` - windows, pruning (greedy / core / local-swap /
   CP-SAT), beam, config-driven experiment runner.
 - `src/eud/benchmarks/` - known-bound tables, frontier comparison,
@@ -26,19 +28,29 @@ satisfying *small* witness, with an exact-arithmetic certificate.
 - `src/eud/viz/` - matplotlib plots, web export.
 - `configs/` - YAML sweep configs.
 - `data/` - generated candidates, frontiers, certificates.
-- `web/` - small Vite + React viewer that consumes generated JSON.
+- `web/` - Vite + React viewer (results, gallery, frontier, live explorer).
+- `scripts/` - regenerate manifests, gallery PNGs, and synthesis JSON for the viewer.
 
 ## Setup
 
 ```bash
-make install      # uv sync --all-extras --dev
-make test         # pytest
-make lint         # ruff
-make smoke-moser  # reproduce uploaded Moser demo
-make baseline     # build erdos_grid + Moser baseline frontier
-make sweep        # run a multi-family search config
-make leaderboard  # rank candidates against the frontier
+make install           # uv sync --all-extras --dev
+make test              # pytest
+make lint              # ruff
+make smoke-moser       # reproduce uploaded Moser demo
+make baseline          # build published-aware frontier (n ≤ 1000)
+make sweep             # run a multi-family search config
+make leaderboard       # rank a run JSONL against the frontier
+make refresh-manifest  # rebuild data/candidates/manifest.json for the web gallery
+make web-dev           # Vite dev server (see web/README.md)
 ```
+
+### Web viewer
+
+See [`web/README.md`](web/README.md). After generating data, symlink
+`data/{candidates,frontiers,gallery,runs}` into `web/public/`, run
+`make refresh-manifest`, then `make web-dev`. For live generation in the
+**explorer** tab, also run `uv run eud-api` in a second terminal.
 
 ## CLI
 
@@ -47,11 +59,13 @@ eud info
 eud version
 
 # Generate a candidate from a family
-eud generate --family moser     --coeff-bound 2 --zeta-order 6 --out data/candidates/moser_B2.json --draw data/candidates/moser_B2.png
-eud generate --family zeta5     --coeff-bound 6 --R 2.5         --out data/candidates/zeta5_R2.5.json --draw data/candidates/zeta5_R2.5.png
-eud generate --family cyclotomic --zeta-order 7 --coeff-bound 4 --R 2.0 --out data/candidates/zeta7.json
-eud generate --family biquadratic --primes 3,5  --coeff-bound 2 --R 1.5 --out data/candidates/biq_3_5.json
-eud generate --family erdos_grid --K 65 --out data/candidates/grid_K65.json
+eud generate --family moser        --coeff-bound 2 --zeta-order 6  --out data/candidates/moser_B2.json --draw data/candidates/moser_B2.png
+eud generate --family engel_moser  --coeff-bound 2 --R 2.25       --out data/candidates/engel_n25.json
+eud generate --family moser_ring   --coeff-bound 2 --denom-power 1 --R 2.25 --out data/candidates/ring_n25.json
+eud generate --family zeta5        --coeff-bound 6 --R 2.5         --out data/candidates/zeta5_R2.5.json --draw data/candidates/zeta5_R2.5.png
+eud generate --family cyclotomic   --zeta-order 12 --coeff-bound 4 --R 2.5 --out data/candidates/zeta12.json
+eud generate --family biquadratic  --primes 3,5 --coeff-bound 2 --R 1.5 --out data/candidates/biq_3_5.json
+eud generate --family erdos_grid   --K 65 --out data/candidates/grid_K65.json
 
 # Verify (sympy exact + optional cypari2 cross-check)
 eud verify data/candidates/zeta5_R2.5.json --pari --out data/verified/zeta5_cert.jsonl
@@ -136,6 +150,11 @@ provide values.
 | 169 | 662          | 577                   | +85     | n/a        | n/a    |
 | 196 | 782          | 696                   | +86     | n/a        | n/a    |
 
+The web viewer and
+[`data/runs/zeta12_vs_published_sota.json`](data/runs/zeta12_vs_published_sota.json)
+also include n ∈ {225, 256, 289} (v1-only ζ_12 wins vs the reproducible
+baseline; no published Engel value).
+
 Source data:
 
 - [`data/runs/zeta12_vs_published_sota.json`](data/runs/zeta12_vs_published_sota.json):
@@ -219,16 +238,35 @@ Run any of these as plain scripts: `uv run python notebooks/00_reproduce_uploade
 ## What's next
 
 The toolchain is plumbed end-to-end and the published baseline is now
-honest. The remaining open directions:
+honest. Scripts added for the active research loop:
 
-1. **Close the n=64 Engel gap.** We match 5/6 checkpoints; the remaining
-   one-edge miss is the best diagnostic for missing child moves or stronger
-   canonization.
-2. **Promote Engel-Moser into the post-100 fallback baseline.** Our current
-   generated frontier is now too weak at n=121..289.
-3. **Improve the Moser ring search.** The ring exposes more exact unit
-   directions, but the first greedy windows do not exploit them.
-4. **Keep improving cut-and-project windows** as a separate line of work.
-   The translated box lesson from ζ_12 is real, just not SOTA.
-5. **Fix multi-worker CP-SAT** on Linux or another OR-Tools version; exact
-   densest-k could still certify small induced seeds.
+- `uv run python scripts/reproduce_engel_2025.py` — Engel Table 2 reproduction
+  (beam + two-swap polish + optional CP-SAT on small k)
+- `uv run python scripts/promote_engel_frontier.py` — merge certified
+  Engel-Moser beyond-100 rows into `data/frontiers/baseline*.jsonl`
+- `uv run python scripts/search_beat_engel_sota.py` — search for
+  `beats_published_sota` rows vs Engel et al. 2025
+
+Remaining open directions:
+
+1. **Close the n=64 Engel gap** (251 vs 252) — beam now retains dense
+   children; local Engel moves plateau at 251 from the current witness.
+2. **First published SOTA win** — run `make beat-engel-sota` after tuning.
+3. **Moser ring + engel-beam** — `configs/search/moser_ring_probe.yaml` uses
+   the shared beam engine (see `method: engel-beam` in experiments).
+4. **Keep improving cut-and-project windows** (ζ₁₂ line; not literature SOTA).
+5. **CP-SAT on Linux** for exact densest-k on modest induced seeds.
+
+## Regenerating viewer assets
+
+| Goal | Command |
+| --- | --- |
+| Gallery candidate list | `make refresh-manifest` |
+| Static PNG panels | `uv run python scripts/render_gallery_full.py` |
+| Frontier/win plots | `uv run python scripts/refresh_gallery.py` |
+| Engel reproduction JSON | `uv run python scripts/reproduce_engel_2025.py` |
+| Z[ζ_12] vs SOTA table | `uv run python scripts/rescore_wins.py` |
+
+Shipped paths under `data/gallery/`, `data/runs/`, and `data/candidates/`
+are gitignored; clone + run the commands above (or copy artifacts) before
+`make web-dev`.

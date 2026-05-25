@@ -1,9 +1,10 @@
-"""Rebuild data/candidates/manifest.json with v2 wins on top.
+"""Rebuild data/candidates/manifest.json for the web gallery.
 
-Combines:
-  - winv2_zeta12_n*.json  (Phase B3 results: box / translated window)
-  - win_zeta12_n*.json    (the original v1 wins)
-  - gallery_*.json         (family showcase candidates)
+Combines (in priority order):
+  - winv2_zeta12_n*.json, win_zeta12_n*.json
+  - engel_moser_reproduce_n*.json, engel_moser_beyond_n*.json
+  - engel_moser_probe_n*.json, moser_ring_probe_n*.json
+  - uploaded_moser_disk_*.json, gallery_*.json
 
 Each entry gets a description, n, e, density, unit_vectors count, and
 a relative file path the web viewer can fetch.

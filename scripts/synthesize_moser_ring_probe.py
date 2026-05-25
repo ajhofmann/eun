@@ -13,6 +13,7 @@ from pathlib import Path
 
 from eud.core.io import read_jsonl, write_candidate
 from eud.families.moser_ring import MoserRingParams, build
+from eud.search.engel_beam import BeamConfig, beam_search
 from eud.search.prune import greedy_peel
 from eud.viz.draw import draw_candidate
 
@@ -32,22 +33,43 @@ def _params_from_row(row: dict) -> MoserRingParams:
     )
 
 
+def _prune_to_k(seed, k: int, *, method: str, prune_cfg: dict) -> object:
+    if method == "engel-beam":
+        start = greedy_peel(seed, k)
+        result = beam_search(
+            start,
+            k,
+            config=BeamConfig(
+                width=int(prune_cfg.get("beam_width", 12)),
+                rounds=int(prune_cfg.get("beam_rounds", 8)),
+                max_additions_per_state=int(prune_cfg.get("beam_additions", 16)),
+                drop_branches=int(prune_cfg.get("beam_drop_branches", 4)),
+                seed=int(prune_cfg.get("seed", 0)),
+            ),
+        )
+        return result.candidate
+    return greedy_peel(seed, k)
+
+
 def main() -> None:
-    best: dict[int, tuple[int, MoserRingParams]] = {}
+    best: dict[int, tuple[int, MoserRingParams, str, dict]] = {}
+    prune_cfg: dict = {}
     for row in read_jsonl(RUN_PATH):
         params = _params_from_row(row)
+        prune_cfg = row.get("prune") or {}
+        method = str(prune_cfg.get("method", "greedy"))
         for pruned in row.get("pruned", []):
             k = int(pruned["n"])
             e = int(pruned["e"])
             if k not in best or e > best[k][0]:
-                best[k] = (e, params)
+                best[k] = (e, params, method, prune_cfg)
 
     rows: list[dict] = []
     for k in sorted(best):
-        expected_e, params = best[k]
-        candidate = greedy_peel(build(params), k)
-        if candidate.e != expected_e:
-            raise RuntimeError(f"k={k}: rebuilt e={candidate.e}, expected {expected_e}")
+        expected_e, params, method, cfg = best[k]
+        candidate = _prune_to_k(build(params), k, method=method, prune_cfg=cfg)
+        if candidate.e < expected_e:
+            raise RuntimeError(f"k={k}: rebuilt e={candidate.e}, expected >= {expected_e}")
         json_path = OUT_DIR / f"moser_ring_probe_n{k}.json"
         png_path = OUT_DIR / f"moser_ring_probe_n{k}.png"
         write_candidate(candidate, json_path)
@@ -57,6 +79,7 @@ def main() -> None:
             "e": candidate.e,
             "density": candidate.density,
             "params": asdict(params),
+            "method": method,
             "n_units": len(candidate.unit_vectors),
             "candidate_file": str(json_path),
             "image_file": str(png_path),

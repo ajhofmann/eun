@@ -33,6 +33,25 @@ def test_edge_count_for_coeffs_matches_candidate_edges() -> None:
     assert edge_count_for_coeffs(coeffs, [tuple(u) for u in candidate.unit_vectors]) == candidate.e
 
 
+def test_beam_search_keeps_dense_child_in_beam() -> None:
+    seed = build(EngelMoserParams(coeff_bound=2, visible_radius=2.0))
+    k = 16
+    result = beam_search(
+        seed,
+        k,
+        config=BeamConfig(
+            width=2,
+            rounds=6,
+            max_additions_per_state=12,
+            drop_branches=2,
+            visit_penalty=1.0,
+            signature_penalty=0.5,
+        ),
+    )
+    assert result.candidate.n == k
+    assert result.best_state.edges == result.candidate.e
+
+
 def test_beam_search_matches_greedy_on_small_seed() -> None:
     seed = build(EngelMoserParams(coeff_bound=2, visible_radius=2.0))
     k = 12

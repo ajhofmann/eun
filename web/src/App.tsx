@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Candidate } from "./components/GraphCanvas";
 import ConstructionExplorer from "./components/ConstructionExplorer";
 import FrontierPlot from "./components/FrontierPlot";
@@ -79,10 +79,34 @@ export interface MoserRingProbeRow {
   };
 }
 
-type Tab = "results" | "explorer" | "gallery" | "frontier" | "constructions" | "about";
+type Tab =
+  | "x-compare"
+  | "results"
+  | "explorer"
+  | "gallery"
+  | "frontier"
+  | "constructions"
+  | "about";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "x-compare", label: "X compare" },
+  { id: "results", label: "results" },
+  { id: "explorer", label: "explorer" },
+  { id: "constructions", label: "constructions" },
+  { id: "gallery", label: "gallery" },
+  { id: "frontier", label: "frontier" },
+  { id: "about", label: "about" },
+];
+
+const TAB_IDS = new Set<Tab>(TABS.map((t) => t.id));
+
+function tabFromHash(): Tab {
+  const hash = window.location.hash.replace(/^#\/?/, "");
+  return TAB_IDS.has(hash as Tab) ? (hash as Tab) : "x-compare";
+}
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("results");
+  const [tab, setTab] = useState<Tab>(() => tabFromHash());
   const [manifest, setManifest] = useState<ManifestEntry[]>([]);
   const [frontier, setFrontier] = useState<FrontierRow[]>([]);
   const [v2Wins, setV2Wins] = useState<WinV2Row[]>([]);
@@ -103,6 +127,17 @@ export default function App() {
       .catch((err: Error) => setError(`manifest: ${err.message}`));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const syncTab = () => setTab(tabFromHash());
+    window.addEventListener("hashchange", syncTab);
+    return () => window.removeEventListener("hashchange", syncTab);
+  }, []);
+
+  function selectTab(next: Tab) {
+    setTab(next);
+    window.location.hash = next;
+  }
 
   useEffect(() => {
     fetch("/frontiers/baseline.jsonl")
@@ -162,13 +197,13 @@ export default function App() {
           post-100 fallback frontier.
         </p>
         <nav style={styles.tabs}>
-          {(["results", "explorer", "constructions", "gallery", "frontier", "about"] as Tab[]).map((t) => (
+          {TABS.map(({ id, label }) => (
             <button
-              key={t}
-              style={{ ...styles.tab, ...(tab === t ? styles.tabActive : {}) }}
-              onClick={() => setTab(t)}
+              key={id}
+              style={{ ...styles.tab, ...(tab === id ? styles.tabActive : {}) }}
+              onClick={() => selectTab(id)}
             >
-              {t}
+              {label}
             </button>
           ))}
         </nav>
@@ -176,13 +211,15 @@ export default function App() {
 
       {error && <div style={styles.error}>error: {error}</div>}
 
+      {tab === "x-compare" && <XCompareTab />}
+
       {tab === "results" && (
         <ResultsTab
           v2Wins={v2Wins}
           engelProbe={engelProbe}
           engelBeyond={engelBeyond}
           moserRingProbe={moserRingProbe}
-          onOpenCandidate={(file) => { setSelected(file); setTab("gallery"); }}
+          onOpenCandidate={(file) => { setSelected(file); selectTab("gallery"); }}
         />
       )}
 
@@ -311,6 +348,293 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 
 // -----------------------------------------------------------------------------
+// Dedicated X comparison page
+// -----------------------------------------------------------------------------
+
+const X_COMPARE_GRAPHS = [
+  {
+    id: "uploaded",
+    title: "Floating-around graph",
+    subtitle: "Z[i, ρ] disk, B=2, |z|<4",
+    file: "/candidates/uploaded_moser_disk_B2_R4.json",
+    color: "#334155",
+    summary:
+      "This is the uploaded construction: a + bi + cρ + diρ with coefficients in {-2,...,2}.",
+  },
+  {
+    id: "erdos",
+    title: "Classical Erdős grid",
+    subtitle: "K=65, 20×27 grid",
+    file: "/candidates/x_compare_erdos_grid_K65_20x27_n540.json",
+    color: "#2563eb",
+    summary:
+      "A plain rectangular grid with unit distance √65. It already beats the uploaded edge count using fewer vertices.",
+  },
+  {
+    id: "engel",
+    title: "Natural Engel-Moser disk",
+    subtitle: "18-unit lattice, coeff_bound=2, R=4",
+    file: "/candidates/x_compare_engel_moser_unpeeled_n543.json",
+    color: "#7c3aed",
+    summary:
+      "A natural, unpeeled Engel-Moser visible disk at the same scale as the shared graph.",
+  },
+];
+
+const X_COMPARE_CONTEXT = {
+  id: "grid545",
+  title: "Same-n grid context",
+  subtitle: "K=65, 30×30 grid → peeled to n=545",
+  file: "/candidates/x_compare_erdos_grid_K65_n545_peeled.json",
+};
+
+function XCompareTab() {
+  const [candidates, setCandidates] = useState<Record<string, Candidate>>({});
+  const [context, setContext] = useState<Candidate | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const entries = await Promise.all(
+          X_COMPARE_GRAPHS.map(async (item) => {
+            const response = await fetch(item.file);
+            if (!response.ok) throw new Error(`${item.file}: HTTP ${response.status}`);
+            return [item.id, (await response.json()) as Candidate] as const;
+          }),
+        );
+        const contextResponse = await fetch(X_COMPARE_CONTEXT.file);
+        const contextCandidate = contextResponse.ok
+          ? ((await contextResponse.json()) as Candidate)
+          : null;
+        if (!cancelled) {
+          setCandidates(Object.fromEntries(entries));
+          setContext(contextCandidate);
+        }
+      } catch (err) {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : String(err));
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const uploaded = candidates.uploaded;
+  const erdos = candidates.erdos;
+  const engel = candidates.engel;
+
+  const rows = X_COMPARE_GRAPHS.map((item) => ({
+    ...item,
+    candidate: candidates[item.id],
+  }));
+
+  return (
+    <div style={styles.frontierLayout}>
+      <style>{`
+        .eud-x-graph-card:fullscreen {
+          width: 100vw;
+          height: 100vh;
+          box-sizing: border-box;
+          overflow: auto;
+          background: white;
+        }
+        .eud-x-graph-card:fullscreen canvas {
+          max-width: none !important;
+        }
+      `}</style>
+      <section style={styles.xHero}>
+        <div>
+          <h2 style={styles.h2}>The graph from X, the classical grid, and a better finite picture</h2>
+          <p style={styles.lead}>
+            The uploaded picture is real and reproducible, but at its own scale it is
+            not stronger than a classical Erdős grid. The three main cards below
+            are all natural, unpeeled shapes/windows near n=545; the stronger
+            small finite picture is the Engel-Moser 18-unit disk.
+          </p>
+        </div>
+        <div style={styles.xClaimBox}>
+          <div style={styles.xClaimLabel}>Safe headline</div>
+          <div style={styles.xClaimText}>
+            Uploaded: n=545, e=2396. Erdős K=65 grid: n=540, e=2584. Our
+            unpeeled Engel-Moser disk: n=543, e=2914.
+          </div>
+        </div>
+      </section>
+
+      {loadError && <div style={styles.error}>comparison load failed: {loadError}</div>}
+
+      <section>
+        <h2 style={styles.h2}>Three graphs to compare</h2>
+        <div style={styles.xCardGrid}>
+          {rows.map((row) => (
+            <XGraphCard
+              key={row.id}
+              title={row.title}
+              subtitle={row.subtitle}
+              summary={row.summary}
+              color={row.color}
+              candidate={row.candidate}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 style={styles.h2}>Numbers, with the caveats visible</h2>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>graph</th>
+              <th style={styles.th}>n</th>
+              <th style={styles.th}>e</th>
+              <th style={styles.th}>e/n</th>
+              <th style={styles.th}>|U|</th>
+              <th style={styles.th}>what is fair to say</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={styles.td}>uploaded Z[i,ρ]</td>
+              <td style={styles.td}>{uploaded?.n ?? "loading"}</td>
+              <td style={styles.td}>{uploaded?.e ?? "loading"}</td>
+              <td style={styles.td}>{uploaded ? uploaded.density.toFixed(3) : "loading"}</td>
+              <td style={styles.td}>{uploaded?.unit_vectors?.length ?? "loading"}</td>
+              <td style={styles.td}>the exact graph in the shared picture</td>
+            </tr>
+            <tr>
+              <td style={styles.td}>Erdős grid K=65</td>
+              <td style={styles.td}>{erdos?.n ?? "loading"}</td>
+              <td style={styles.td}>{erdos?.e ?? "loading"}</td>
+              <td style={styles.td}>{erdos ? erdos.density.toFixed(3) : "loading"}</td>
+              <td style={styles.td}>{erdos?.unit_vectors?.length ?? "loading"}</td>
+              <td style={styles.td}>beats the uploaded edge count with five fewer vertices</td>
+            </tr>
+            <tr style={styles.winRow}>
+              <td style={styles.td}>Engel-Moser witness</td>
+              <td style={styles.td}>{engel?.n ?? "loading"}</td>
+              <td style={styles.td}>{engel?.e ?? "loading"}</td>
+              <td style={styles.td}>{engel ? engel.density.toFixed(3) : "loading"}</td>
+              <td style={styles.td}>{engel?.unit_vectors?.length ?? "loading"}</td>
+              <td style={styles.td}>beats both as a natural unpeeled graph near n=545</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style={styles.description}>
+          Separate same-n sanity check: after greedy peeling to exactly n=545, the
+          saved K=65 grid has e={context?.e ?? "..."} from a 30×30 seed, while the
+          peeled Engel-Moser candidate has e=3189. That same-n comparison is
+          useful, but the three graphs on this page are the cleaner unpeeled
+          visual comparison. This is not a claim that no better grid or non-grid
+          construction exists; it is the exact reproducible comparison produced by
+          this repo.
+        </p>
+      </section>
+
+      <section style={styles.xCaveat}>
+        <h2 style={styles.h2}>Recommended wording</h2>
+        <p style={styles.description}>
+          A quote tweet is fair if it avoids saying “the AI result is wrong” or
+          “this is the new record.” A safer phrasing is:
+        </p>
+        <blockquote style={styles.quote}>
+          I got nerd-sniped by this Erdős unit-distance graph that has been going
+          around. The pictured Z[i,ρ] construction is real (n=545, e=2396), but a
+          classical K=65 Erdős grid already gets e=2584 with n=540. I tried to find
+          a more satisfying small finite picture: an unpeeled Engel-Moser 18-unit
+          disk gets n=543, e=2914 at the same scale.
+        </blockquote>
+        <p style={styles.description}>
+          The important caveat: Sawin/OpenAI is an asymptotic theorem. This page is
+          about the specific finite picture being shared and a finite replacement
+          that is stronger at roughly the same size.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function XGraphCard({
+  title,
+  subtitle,
+  summary,
+  color,
+  candidate,
+}: {
+  title: string;
+  subtitle: string;
+  summary: string;
+  color: string;
+  candidate?: Candidate;
+}) {
+  const cardRef = useRef<HTMLElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function handleFullscreenChange() {
+      setIsFullscreen(document.fullscreenElement === cardRef.current);
+    }
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  async function toggleFullscreen() {
+    if (document.fullscreenElement === cardRef.current) {
+      await document.exitFullscreen();
+      return;
+    }
+    await cardRef.current?.requestFullscreen();
+  }
+
+  return (
+    <article
+      ref={cardRef}
+      className="eud-x-graph-card"
+      style={{
+        ...styles.xCard,
+        ...(isFullscreen ? styles.xCardFullscreen : null),
+        borderTopColor: color,
+      }}
+    >
+      <div style={styles.xCardHeader}>
+        <div>
+          <h3 style={styles.xCardTitle}>{title}</h3>
+          <p style={styles.xCardSubtitle}>{subtitle}</p>
+        </div>
+        <button type="button" style={styles.xFullscreenBtn} onClick={toggleFullscreen}>
+          {isFullscreen ? "exit full screen" : "full screen"}
+        </button>
+      </div>
+      {candidate ? (
+        <>
+          <div style={styles.xStats}>
+            <Stat label="n" value={candidate.n} />
+            <Stat label="e" value={candidate.e} />
+            <Stat label="e/n" value={candidate.density.toFixed(3)} />
+            <Stat label="|U|" value={candidate.unit_vectors?.length ?? "?"} />
+          </div>
+          <InteractiveGraphCanvas
+            candidate={candidate}
+            compact
+            width={isFullscreen ? 1180 : 380}
+            height={isFullscreen ? 760 : 330}
+          />
+          <details style={styles.details}>
+            <summary>params</summary>
+            <pre style={styles.pre}>{JSON.stringify(candidate.params, null, 2)}</pre>
+          </details>
+        </>
+      ) : (
+        <p style={styles.description}>loading graph…</p>
+      )}
+      <p style={styles.description}>{summary}</p>
+    </article>
+  );
+}
+
+// -----------------------------------------------------------------------------
 // Results tab
 // -----------------------------------------------------------------------------
 
@@ -338,8 +662,9 @@ function ResultsTab({
         <h2 style={styles.h2}>Headline result</h2>
         <p style={styles.lead}>
           A rank-4 cyclotomic cut-and-project construction (Z[ζ_12] with a
-          translated box window) improves our reproducible baseline at{" "}
-          <strong>{reproWinCount}</strong> of the tested n values, but it does{" "}
+          translated box window) strictly improves our reproducible baseline at{" "}
+          <strong>{reproWinCount}</strong> of {sortedV2.length} probed n values
+          (see table; ties at n=36 and n=49 do not count), but it does{" "}
           <strong>not</strong> beat published finite SOTA where Engel et al.
           2025 report a table. It trails that table at {sotaRows.length} of{" "}
           {sotaRows.length} covered n values; SOTA wins: {sotaWinCount}.
@@ -801,23 +1126,33 @@ function AboutTab() {
         <h2 style={styles.h2}>What's still open</h2>
         <ul style={{ ...styles.description, paddingLeft: 20 }}>
           <li>
-            Curate <code>known_bounds</code> for n ∈ [31, 100] from
-            Schade (2020) and the Moser-beam-search literature.
+            Close the n=64 Engel gap (251 vs 252): likely missing child moves
+            or stronger canonization in the beam search.
           </li>
           <li>
-            Run multi-worker CP-SAT on Linux to <em>prove</em> optimality at
-            small k (the Apple-silicon hang is OR-Tools issue, not algorithmic).
+            Promote Engel-Moser into the post-100 fallback baseline; the
+            published-aware frontier still under-reports n=121..289.
           </li>
           <li>
-            Hybrid <code>Z[ζ_12] ∪ shifted-Z[ζ_12]</code> could in principle
-            exceed the 12-direction density cap of 6/vertex.
+            Improve Moser-ring search: more exact unit directions exist, but
+            greedy windows do not yet exploit them.
           </li>
           <li>
-            Adaptive ellipsoid windows per Galois conjugate for higher-rank
-            cyclotomic fields (current sweep used isotropic balls in 6-D,
-            which is the worst-case window shape).
+            Run multi-worker CP-SAT on Linux (OR-Tools 9.15 hangs on Apple
+            silicon); exact densest-k may still certify small induced seeds.
+          </li>
+          <li>
+            Keep cut-and-project window work as a separate line: Z[ζ_12]
+            translated boxes beat our reproducible baseline but not Engel
+            et al. through n=100.
           </li>
         </ul>
+        <p style={styles.description}>
+          Repo docs: <code>README.md</code> (toolchain + tables),{" "}
+          <code>NARRATIVE.md</code> (lessons learned). Regenerate shipped JSON
+          and gallery plots with <code>make refresh-manifest</code> and the
+          scripts under <code>scripts/</code>.
+        </p>
       </section>
     </div>
   );
@@ -949,5 +1284,103 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "inherit",
     borderRadius: 4,
     cursor: "pointer",
+  },
+  xHero: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 380px)",
+    gap: 18,
+    alignItems: "start",
+    border: "1px solid #2222",
+    borderRadius: 12,
+    padding: 18,
+    background: "linear-gradient(135deg, #f8fafc, #eef2ff)",
+  },
+  xClaimBox: {
+    border: "1px solid rgba(124, 58, 237, 0.25)",
+    borderRadius: 10,
+    padding: 14,
+    background: "rgba(124, 58, 237, 0.08)",
+  },
+  xClaimLabel: {
+    fontSize: 11,
+    opacity: 0.65,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    fontWeight: 700,
+    marginBottom: 6,
+  },
+  xClaimText: {
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: 13,
+    lineHeight: 1.55,
+    fontWeight: 600,
+  },
+  xCardGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+    gap: 16,
+  },
+  xCard: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    border: "1px solid #2222",
+    borderTop: "4px solid",
+    borderRadius: 12,
+    padding: 14,
+    background: "#fff",
+    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  },
+  xCardFullscreen: {
+    borderRadius: 0,
+    padding: 24,
+  },
+  xCardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  xCardTitle: {
+    margin: 0,
+    fontSize: 16,
+    fontWeight: 700,
+  },
+  xCardSubtitle: {
+    margin: "3px 0 0",
+    fontSize: 12,
+    opacity: 0.65,
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  },
+  xFullscreenBtn: {
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    color: "#0f172a",
+    borderRadius: 999,
+    padding: "5px 10px",
+    fontSize: 11,
+    fontFamily: "inherit",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+  xStats: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: 8,
+  },
+  xCaveat: {
+    border: "1px solid rgba(245, 158, 11, 0.35)",
+    borderRadius: 12,
+    padding: 16,
+    background: "rgba(245, 158, 11, 0.06)",
+  },
+  quote: {
+    margin: "12px 0",
+    padding: "12px 14px",
+    borderLeft: "4px solid #7c3aed",
+    background: "#fff",
+    borderRadius: 8,
+    fontSize: 14,
+    lineHeight: 1.6,
   },
 };

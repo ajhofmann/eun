@@ -36,6 +36,7 @@ COMPARE_DEFAULT_CONSTRUCTIONS: tuple[Construction, ...] = (
     "moser_hex",
     "engel_moser",
     "moser_ring",
+    "moser",
     "cyclotomic",
     "erdos_grid",
 )

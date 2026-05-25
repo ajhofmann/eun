@@ -12,12 +12,13 @@
     },
     "n_units": 42,
     "candidate_file": "data/candidates/moser_ring_probe_n25.json",
-    "image_file": "data/candidates/moser_ring_probe_n25.png"
+    "image_file": "data/candidates/moser_ring_probe_n25.png",
+    "search": "greedy_probe_plus_beam_refinement"
   },
   {
     "k": 36,
-    "e": 117,
-    "density": 3.25,
+    "e": 118,
+    "density": 3.2777777777777777,
     "params": {
       "denom_power": 1,
       "coeff_bound": 3,
@@ -27,7 +28,8 @@
     },
     "n_units": 42,
     "candidate_file": "data/candidates/moser_ring_probe_n36.json",
-    "image_file": "data/candidates/moser_ring_probe_n36.png"
+    "image_file": "data/candidates/moser_ring_probe_n36.png",
+    "search": "greedy_probe_plus_beam_refinement"
   },
   {
     "k": 49,
@@ -42,12 +44,13 @@
     },
     "n_units": 42,
     "candidate_file": "data/candidates/moser_ring_probe_n49.json",
-    "image_file": "data/candidates/moser_ring_probe_n49.png"
+    "image_file": "data/candidates/moser_ring_probe_n49.png",
+    "search": "greedy_probe_plus_beam_refinement"
   },
   {
     "k": 64,
-    "e": 231,
-    "density": 3.609375,
+    "e": 238,
+    "density": 3.71875,
     "params": {
       "denom_power": 1,
       "coeff_bound": 3,
@@ -57,12 +60,13 @@
     },
     "n_units": 42,
     "candidate_file": "data/candidates/moser_ring_probe_n64.json",
-    "image_file": "data/candidates/moser_ring_probe_n64.png"
+    "image_file": "data/candidates/moser_ring_probe_n64.png",
+    "search": "greedy_probe_plus_beam_refinement"
   },
   {
     "k": 81,
-    "e": 299,
-    "density": 3.691358024691358,
+    "e": 303,
+    "density": 3.740740740740741,
     "params": {
       "denom_power": 1,
       "coeff_bound": 3,
@@ -72,12 +76,13 @@
     },
     "n_units": 42,
     "candidate_file": "data/candidates/moser_ring_probe_n81.json",
-    "image_file": "data/candidates/moser_ring_probe_n81.png"
+    "image_file": "data/candidates/moser_ring_probe_n81.png",
+    "search": "greedy_probe_plus_beam_refinement"
   },
   {
     "k": 100,
-    "e": 363,
-    "density": 3.63,
+    "e": 372,
+    "density": 3.72,
     "params": {
       "denom_power": 1,
       "coeff_bound": 3,
@@ -87,6 +92,7 @@
     },
     "n_units": 42,
     "candidate_file": "data/candidates/moser_ring_probe_n100.json",
-    "image_file": "data/candidates/moser_ring_probe_n100.png"
+    "image_file": "data/candidates/moser_ring_probe_n100.png",
+    "search": "greedy_probe_plus_beam_refinement"
   }
 ]

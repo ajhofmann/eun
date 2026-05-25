@@ -117,6 +117,22 @@ def _maybe_prune(c: Candidate, prune_cfg: dict[str, Any] | None) -> list[dict]:
                     seed=prune_cfg.get("seed", 0),
                 ),
             )
+        elif method == "engel-beam":
+            from eud.search.engel_beam import BeamConfig, beam_search
+
+            seed = greedy_peel(c, k)
+            result = beam_search(
+                seed,
+                k,
+                config=BeamConfig(
+                    width=prune_cfg.get("beam_width", 16),
+                    rounds=prune_cfg.get("beam_rounds", 12),
+                    max_additions_per_state=prune_cfg.get("beam_additions", 18),
+                    drop_branches=prune_cfg.get("beam_drop_branches", 4),
+                    seed=prune_cfg.get("seed", 0),
+                ),
+            )
+            sub = result.candidate
         else:
             raise ValueError(f"unknown prune method: {method}")
         rows.append(
@@ -188,6 +204,7 @@ def run_config(
             row["beats_frontier"] = is_record(cand, frontier)
 
         if prune_cfg:
+            row["prune"] = prune_cfg
             row["pruned"] = _maybe_prune(cand, prune_cfg)
 
         append_jsonl(row, out)

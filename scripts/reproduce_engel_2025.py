@@ -42,10 +42,11 @@ class SearchConfig:
     starts: int = 60
     perturb_rounds: int = 80
     max_no_improve: int = 25
-    beam_width: int = 18
-    beam_rounds: int = 12
-    beam_additions: int = 18
-    beam_drop_branches: int = 4
+    beam_width: int = 32
+    beam_rounds: int = 20
+    beam_additions: int = 24
+    beam_drop_branches: int = 6
+    beam_seeds: int = 4
     seed: int = 0
 
 
@@ -57,6 +58,56 @@ def _greedy_indices(seed: Candidate, k: int) -> set[int]:
     sub = greedy_peel(seed, k)
     coeffs = {p.coeffs for p in sub.points}
     return {i for i, p in enumerate(seed.points) if p.coeffs in coeffs}
+
+
+def _best_two_swap(
+    S: set[int],
+    adj: list[set[int]],
+    *,
+    max_outside: int = 200,
+    max_out_pairs: int = 120,
+) -> tuple[int, int, int, int, int]:
+    """Remove two vertices and add two; returns (delta, out1, out2, in1, in2)."""
+
+    outside = [u for u in range(len(adj)) if u not in S]
+    if len(outside) > max_outside:
+        gains = {u: sum(1 for v in adj[u] if v in S) for u in outside}
+        outside = sorted(outside, key=lambda u: (-gains[u], u))[:max_outside]
+    losses = {v: sum(1 for u in adj[v] if u in S) for v in S}
+    best_delta = 0
+    best = (-1, -1, -1, -1)
+    verts = sorted(S, key=lambda v: (losses[v], v))
+    out_pairs: list[tuple[int, int]] = []
+    for i, v1 in enumerate(verts):
+        for v2 in verts[i + 1 :]:
+            out_pairs.append((v1, v2))
+            if len(out_pairs) >= max_out_pairs:
+                break
+        if len(out_pairs) >= max_out_pairs:
+            break
+    for v1, v2 in out_pairs:
+        base_loss = losses[v1] + losses[v2]
+        cross = sum(1 for u in adj[v1] if u in S and u != v2)
+        cross += sum(1 for u in adj[v2] if u in S and u != v1)
+        base_loss -= cross
+        for j, u1 in enumerate(outside):
+            g1 = sum(1 for v in adj[u1] if v in S)
+            adj_u1 = adj[u1]
+            for u2 in outside[j + 1 :]:
+                delta = (
+                    g1
+                    + sum(1 for v in adj[u2] if v in S)
+                    - base_loss
+                    - (1 if v1 in adj_u1 else 0)
+                    - (1 if v2 in adj_u1 else 0)
+                    - (1 if v1 in adj[u2] else 0)
+                    - (1 if v2 in adj[u2] else 0)
+                    - (1 if u2 in adj_u1 else 0)
+                )
+                if delta > best_delta:
+                    best_delta = delta
+                    best = (v1, v2, u1, u2)
+    return best_delta, *best
 
 
 def _best_one_swap(S: set[int], adj: list[set[int]]) -> tuple[int, int, int]:
@@ -79,9 +130,17 @@ def _best_one_swap(S: set[int], adj: list[set[int]]) -> tuple[int, int, int]:
     return best_delta, best_out, best_in
 
 
-def _hill_climb(S: set[int], adj: list[set[int]]) -> set[int]:
+def _hill_climb(S: set[int], adj: list[set[int]], *, use_two_swap: bool = False) -> set[int]:
     S = set(S)
     while True:
+        if use_two_swap:
+            delta2, o1, o2, i1, i2 = _best_two_swap(S, adj)
+            if delta2 > 0 and o1 >= 0:
+                S.remove(o1)
+                S.remove(o2)
+                S.add(i1)
+                S.add(i2)
+                continue
         delta, v_out, v_in = _best_one_swap(S, adj)
         if delta <= 0:
             return S
@@ -121,21 +180,67 @@ def _perturb_and_repair(
         ]
         scored.sort(reverse=True)
         S.add(scored[0][2])
-    return _hill_climb(S, adj)
+    return _hill_climb(S, adj, use_two_swap=len(S) <= 64)
 
 
-def optimize(seed: Candidate, k: int, cfg: SearchConfig) -> tuple[Candidate, dict]:
+def _indices_for_coeffs(seed: Candidate, coeffs: set[tuple[int, int, int, int]]) -> set[int]:
+    coeff_to_idx = {tuple(p.coeffs): i for i, p in enumerate(seed.points)}
+    return {coeff_to_idx[c] for c in coeffs if c in coeff_to_idx}
+
+
+def try_cp_sat_polish(sub: Candidate, seed: Candidate, k: int) -> Candidate:
+    """Exact densest-k on modest parent graphs when local search plateaus."""
+
+    if k > 64 or seed.n > 450:
+        return sub
+    try:
+        from eud.search.ilp import CPSATConfig, cp_sat_densest_k
+    except ImportError:
+        return sub
+    refined, _ = cp_sat_densest_k(
+        seed,
+        k,
+        config=CPSATConfig(time_limit_s=90.0, workers=1, seed=0, symmetry_level=0),
+    )
+    return refined if refined.n == k and refined.e > sub.e else sub
+
+
+def polish_on_parent(sub: Candidate, seed: Candidate, k: int, cfg: SearchConfig) -> Candidate:
+    """Re-run hill-climb swaps on the parent seed graph starting from `sub`."""
+
+    if sub.n != k:
+        return sub
+    adj = adjacency(seed.n, seed.edges)
+    coeffs = {tuple(p.coeffs) for p in sub.points}
+    S = _indices_for_coeffs(seed, coeffs)
+    if len(S) != k:
+        return sub
+    S = _hill_climb(S, adj, use_two_swap=k <= 64)
+    polished = seed.induced_subgraph(sorted(S))
+    return polished if polished.e >= sub.e else sub
+
+
+def optimize(
+    seed: Candidate,
+    k: int,
+    cfg: SearchConfig,
+    *,
+    initial: Candidate | None = None,
+) -> tuple[Candidate, dict]:
     adj = adjacency(seed.n, seed.edges)
     rng = random.Random(cfg.seed + 1009 * k + seed.n)
 
     starts: list[set[int]] = [_greedy_indices(seed, k)]
+    if initial is not None and initial.n == k:
+        starts.insert(0, _indices_for_coeffs(seed, {tuple(p.coeffs) for p in initial.points}))
     for _ in range(cfg.starts):
         starts.append(_random_high_degree_start(adj, k, rng))
 
     best_S: set[int] = set()
     best_e = -1
+    use_two_swap = k <= 64
     for S0 in starts:
-        S = _hill_climb(S0, adj)
+        S = _hill_climb(S0, adj, use_two_swap=use_two_swap)
         e = _score(S, adj)
         if e > best_e:
             best_S, best_e = S, e
@@ -144,6 +249,7 @@ def optimize(seed: Candidate, k: int, cfg: SearchConfig) -> tuple[Candidate, dic
     for t in range(cfg.perturb_rounds):
         strength = 1 + (t % max(1, min(8, k // 8)))
         S = _perturb_and_repair(best_S, adj, rng=rng, strength=strength)
+        S = _hill_climb(S, adj, use_two_swap=use_two_swap)
         e = _score(S, adj)
         if e > best_e:
             best_S, best_e = S, e
@@ -161,42 +267,69 @@ def optimize(seed: Candidate, k: int, cfg: SearchConfig) -> tuple[Candidate, dic
     }
 
 
-def improve_with_beam(sub: Candidate, k: int, cfg: SearchConfig) -> tuple[Candidate, dict]:
+def improve_with_beam(
+    sub: Candidate,
+    k: int,
+    cfg: SearchConfig,
+    *,
+    parent: Candidate | None = None,
+) -> tuple[Candidate, dict]:
     """Run coefficient-space beam search around a strong k-vertex seed."""
 
+    parent = parent or sub
+    best = sub
+    if cfg.beam_width <= 0 or cfg.beam_rounds <= 0:
+        return best, {"skipped": True, "best_e": best.e}
+    runs: list[dict] = []
     print(
         f"k={k} beam start seed_e={sub.e} width={cfg.beam_width} "
-        f"rounds={cfg.beam_rounds}"
+        f"rounds={cfg.beam_rounds} seeds={cfg.beam_seeds}"
     )
     t0 = time.time()
-    beam = beam_search(
-        sub,
-        k,
-        config=BeamConfig(
-            width=cfg.beam_width,
-            rounds=cfg.beam_rounds,
-            max_additions_per_state=cfg.beam_additions,
-            drop_branches=cfg.beam_drop_branches,
-            seed=cfg.seed,
-        ),
-    )
+    for beam_seed in range(cfg.beam_seeds):
+        beam = beam_search(
+            sub,
+            k,
+            config=BeamConfig(
+                width=cfg.beam_width,
+                rounds=cfg.beam_rounds,
+                max_additions_per_state=cfg.beam_additions,
+                drop_branches=cfg.beam_drop_branches,
+                seed=cfg.seed + 1009 * beam_seed,
+                visit_penalty=0.02,
+                signature_penalty=0.01,
+            ),
+        )
+        candidate = polish_on_parent(beam.candidate, parent, k, cfg)
+        candidate = optimize(parent, k, cfg, initial=candidate)[0]
+        candidate = try_cp_sat_polish(candidate, parent, k)
+        runs.append(
+            {
+                "beam_seed": beam_seed,
+                "rounds_completed": beam.rounds_completed,
+                "states_seen": beam.states_seen,
+                "beam_e": beam.candidate.e,
+                "polished_e": candidate.e,
+            }
+        )
+        if candidate.e > best.e:
+            best = candidate
     info = {
         "width": cfg.beam_width,
         "rounds": cfg.beam_rounds,
         "max_additions_per_state": cfg.beam_additions,
         "drop_branches": cfg.beam_drop_branches,
-        "rounds_completed": beam.rounds_completed,
-        "states_seen": beam.states_seen,
-        "best_by_round": beam.best_by_round,
+        "beam_seeds": cfg.beam_seeds,
         "seed_e": sub.e,
-        "best_e": beam.candidate.e,
+        "best_e": best.e,
+        "runs": runs,
         "wall_time_s": time.time() - t0,
     }
     print(
-        f"k={k} beam done best_e={beam.candidate.e} "
-        f"states={beam.states_seen} ({info['wall_time_s']:.1f}s)"
+        f"k={k} beam done best_e={best.e} "
+        f"({info['wall_time_s']:.1f}s)"
     )
-    return (beam.candidate, info) if beam.candidate.e >= sub.e else (sub, info)
+    return best, info
 
 
 def write_exact_certificate(candidate: Candidate, path: Path) -> None:
@@ -225,6 +358,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--beam-rounds", type=int, default=SearchConfig.beam_rounds)
     parser.add_argument("--beam-additions", type=int, default=SearchConfig.beam_additions)
     parser.add_argument("--beam-drop-branches", type=int, default=SearchConfig.beam_drop_branches)
+    parser.add_argument("--beam-seeds", type=int, default=SearchConfig.beam_seeds)
     parser.add_argument("--max-coeff-bound", type=int, default=3)
     parser.add_argument("--max-visible-radius", type=float, default=4.0)
     parser.add_argument("--seed", type=int, default=SearchConfig.seed)
@@ -240,6 +374,7 @@ def main() -> None:
         beam_rounds=args.beam_rounds,
         beam_additions=args.beam_additions,
         beam_drop_branches=args.beam_drop_branches,
+        beam_seeds=args.beam_seeds,
         seed=args.seed,
     )
     k_values = _parse_k_values(args.k_values)
@@ -282,11 +417,54 @@ def main() -> None:
                 break
         assert best is not None
         _, sub, params, info = best
-        beam_sub, beam_info = improve_with_beam(sub, k, cfg)
+        parent_seed = next(seed for p, seed in seeds if p == params)
+        beam_sub, beam_info = improve_with_beam(sub, k, cfg, parent=parent_seed)
+        for large_params, large_seed in seeds:
+            if large_seed.n < max(3 * k, 150):
+                continue
+            large_sub, _ = optimize(large_seed, k, cfg)
+            beam_large, large_info = improve_with_beam(
+                large_sub,
+                k,
+                cfg,
+                parent=large_seed,
+            )
+            if beam_large.e > beam_sub.e:
+                print(
+                    f"k={k} large-window improved e={beam_sub.e} -> {beam_large.e} "
+                    f"from n={large_seed.n}"
+                )
+                beam_sub = beam_large
+                params = large_params
+                parent_seed = large_seed
+                beam_info = {**beam_info, "large_window": large_info}
         if beam_sub.e > sub.e:
             print(f"k={k} beam improved e={sub.e} -> {beam_sub.e} target={target}")
         sub = beam_sub
         info = {**info, "beam": beam_info}
+        if target is not None and sub.e < target:
+            heavy = SearchConfig(
+                starts=max(cfg.starts, 80),
+                perturb_rounds=max(cfg.perturb_rounds, 120),
+                beam_width=max(cfg.beam_width, 48),
+                beam_rounds=max(cfg.beam_rounds, 32),
+                beam_additions=max(cfg.beam_additions, 32),
+                beam_drop_branches=max(cfg.beam_drop_branches, 8),
+                beam_seeds=max(cfg.beam_seeds, 6),
+                seed=cfg.seed + 17,
+            )
+            print(f"k={k} heavy pass target={target} current={sub.e}")
+            heavy_sub, heavy_info = optimize(parent_seed, k, heavy, initial=sub)
+            heavy_sub, heavy_beam = improve_with_beam(
+                heavy_sub,
+                k,
+                heavy,
+                parent=parent_seed,
+            )
+            if heavy_sub.e > sub.e:
+                print(f"k={k} heavy improved e={sub.e} -> {heavy_sub.e}")
+                sub = heavy_sub
+                info = {**info, "heavy": heavy_info, "heavy_beam": heavy_beam}
         cand_path = OUT_DIR / f"{args.prefix}_n{k}.json"
         png_path = OUT_DIR / f"{args.prefix}_n{k}.png"
         cert_path = VERIFY_DIR / f"{args.prefix}_n{k}_cert.jsonl"

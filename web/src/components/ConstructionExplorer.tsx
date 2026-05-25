@@ -99,11 +99,12 @@ const STYLES_CSS = `
 type ExplorerMode = "single" | "compare";
 
 interface CompareResultEntry {
-  id: Construction;
+  id: string;
   label: string;
   candidate?: Candidate;
   source?: { n: number; e: number; params: Record<string, unknown> };
   error?: string;
+  isReference?: boolean;
 }
 
 const COMPARE_CONSTRUCTIONS: Construction[] = [
@@ -116,6 +117,26 @@ const COMPARE_CONSTRUCTIONS: Construction[] = [
 ];
 
 const COMPARE_QUICK_PICKS = [25, 36, 49, 64, 81, 100, 144, 200, 400];
+
+interface ReferenceShortcut {
+  id: string;
+  label: string;
+  file: string;
+  n: number;
+  e: number;
+  description: string;
+}
+
+const REFERENCE_SHORTCUTS: ReferenceShortcut[] = [
+  {
+    id: "uploaded_b2_r4",
+    label: "Uploaded Moser disk (B=2, R=4)",
+    file: "/candidates/uploaded_moser_disk_B2_R4.json",
+    n: 545,
+    e: 2396,
+    description: "Rank-4 Moser lattice {a,b,c,d ∈ {-2,…,2}} inside |z|<4.",
+  },
+];
 
 export default function ConstructionExplorer() {
   const [mode, setMode] = useState<ExplorerMode>("single");
@@ -133,6 +154,7 @@ export default function ConstructionExplorer() {
   const [compareTargetUsed, setCompareTargetUsed] = useState<number | null>(null);
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState<string | null>(null);
+  const [referenceEntry, setReferenceEntry] = useState<CompareResultEntry | null>(null);
 
   const [zetaOrder, setZetaOrder] = useState("6");
   const [coeffBound, setCoeffBound] = useState("4");
@@ -214,6 +236,58 @@ export default function ConstructionExplorer() {
     setCompareSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+  }
+
+  async function handleLoadReference(shortcut: ReferenceShortcut) {
+    setCompareLoading(true);
+    setCompareError(null);
+    try {
+      const refResp = await fetch(shortcut.file);
+      if (!refResp.ok) {
+        throw new Error(`could not load reference (${refResp.status})`);
+      }
+      const cand = (await refResp.json()) as Candidate;
+      const targetN = cand.n;
+      setCompareTargetN(String(targetN));
+      const ref: CompareResultEntry = {
+        id: `reference_${shortcut.id}`,
+        label: shortcut.label,
+        candidate: cand,
+        source: {
+          n: cand.n,
+          e: cand.e,
+          params: (cand.params as Record<string, unknown>) ?? {},
+        },
+        isReference: true,
+      };
+      setReferenceEntry(ref);
+
+      const response = await fetch("/api/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_n: targetN,
+          constructions: compareSelected,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(await errorMessage(response));
+      }
+      const body = (await response.json()) as {
+        target_n: number;
+        results: CompareResultEntry[];
+      };
+      setCompareResults(body.results);
+      setCompareTargetUsed(body.target_n);
+    } catch (err) {
+      setCompareError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCompareLoading(false);
+    }
+  }
+
+  function clearReference() {
+    setReferenceEntry(null);
   }
 
   function paramsForConstruction(): Record<string, number | string> {
@@ -390,11 +464,19 @@ export default function ConstructionExplorer() {
 
   function renderCompareMode() {
     const target = compareTargetUsed;
-    const successful = (compareResults ?? []).filter(
-      (entry): entry is CompareResultEntry & { candidate: Candidate } => Boolean(entry.candidate),
+    const apiSuccessful = (compareResults ?? []).filter(
+      (entry): entry is CompareResultEntry & { candidate: Candidate } =>
+        Boolean(entry.candidate),
     );
-    const ranked = [...successful].sort(
-      (a, b) => b.candidate.e - a.candidate.e || b.candidate.density - a.candidate.density,
+    const referenceMatches = Boolean(
+      referenceEntry?.candidate && referenceEntry.candidate.n === target,
+    );
+    const referenceForRanking =
+      referenceMatches && referenceEntry?.candidate ? [referenceEntry] : [];
+    const ranked = [...apiSuccessful, ...referenceForRanking].sort(
+      (a, b) =>
+        (b.candidate?.e ?? 0) - (a.candidate?.e ?? 0) ||
+        (b.candidate?.density ?? 0) - (a.candidate?.density ?? 0),
     );
     const winner = ranked[0] ?? null;
     const orderedResults = [
@@ -433,6 +515,48 @@ export default function ConstructionExplorer() {
                 "compare"
               )}
             </button>
+          </div>
+
+          <div style={styles.referenceRow}>
+            <div style={styles.referenceCopy}>
+              <span style={styles.label}>match a reference graph</span>
+              <span style={styles.help}>
+                Lock the target n to a known graph and include it as a card alongside the
+                built constructions.
+              </span>
+            </div>
+            <div style={styles.referenceShortcuts}>
+              {REFERENCE_SHORTCUTS.map((shortcut) => {
+                const isActive = referenceEntry?.id === `reference_${shortcut.id}`;
+                return (
+                  <button
+                    key={shortcut.id}
+                    type="button"
+                    onClick={() => handleLoadReference(shortcut)}
+                    style={{
+                      ...styles.referenceShortcut,
+                      ...(isActive ? styles.referenceShortcutActive : null),
+                    }}
+                    disabled={compareLoading}
+                    title={shortcut.description}
+                  >
+                    <span style={styles.referenceShortcutLabel}>{shortcut.label}</span>
+                    <span style={styles.referenceShortcutMeta}>
+                      n = {shortcut.n} · e = {shortcut.e}
+                    </span>
+                  </button>
+                );
+              })}
+              {referenceEntry && (
+                <button
+                  type="button"
+                  onClick={clearReference}
+                  style={styles.referenceClear}
+                >
+                  clear reference
+                </button>
+              )}
+            </div>
           </div>
 
           <div style={styles.compareControls}>
@@ -513,7 +637,7 @@ export default function ConstructionExplorer() {
                   Each canvas is a greedy-peeled subgraph of the same target size.
                 </p>
               </div>
-              {winner && (
+              {winner?.candidate && (
                 <div style={styles.winnerBadge}>
                   winner: {winner.label} · e={winner.candidate.e} · e/n=
                   {winner.candidate.density.toFixed(3)}
@@ -748,15 +872,26 @@ function CompareCard({ entry, rank }: { entry: CompareResultEntry; rank?: number
     );
   }
   const cand = entry.candidate;
+  const cardStyle: CSSProperties = {
+    ...styles.compareCard,
+    ...(rank === 1 ? styles.compareCardWinner : null),
+    ...(entry.isReference ? styles.compareCardReference : null),
+  };
   return (
-    <div style={{ ...styles.compareCard, ...(rank === 1 ? styles.compareCardWinner : null) }}>
+    <div style={cardStyle}>
       <div style={styles.compareCardHeader}>
         <div style={styles.compareCardHeading}>
           <strong style={styles.compareCardTitle}>
             {rank ? `#${rank} ` : ""}
             {entry.label}
           </strong>
-          {rank === 1 && <span style={styles.winnerChip}>winner</span>}
+          {entry.isReference && <span style={styles.referenceChip}>reference</span>}
+          {rank === 1 && !entry.isReference && (
+            <span style={styles.winnerChip}>winner</span>
+          )}
+          {rank === 1 && entry.isReference && (
+            <span style={styles.winnerChip}>top e</span>
+          )}
           <span style={styles.compareCardId}>{entry.id}</span>
         </div>
         <div style={styles.compareCardStats}>
@@ -1203,5 +1338,80 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 8,
     color: "#b91c1c",
     fontSize: 12,
+  },
+  referenceRow: {
+    display: "grid",
+    gridTemplateColumns: "minmax(180px, 220px) minmax(0, 1fr)",
+    gap: 18,
+    alignItems: "flex-start",
+    marginBottom: 14,
+    padding: 12,
+    borderRadius: 10,
+    background: "rgba(59, 130, 246, 0.05)",
+    border: "1px dashed rgba(59, 130, 246, 0.35)",
+  },
+  referenceCopy: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+  },
+  referenceShortcuts: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    alignItems: "stretch",
+  },
+  referenceShortcut: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 4,
+    padding: "8px 12px",
+    border: "1px solid rgba(15, 23, 42, 0.15)",
+    borderRadius: 10,
+    background: "#fff",
+    cursor: "pointer",
+    color: "inherit",
+    textAlign: "left",
+    fontFamily: "inherit",
+    fontSize: 13,
+  },
+  referenceShortcutActive: {
+    borderColor: "rgba(59, 130, 246, 0.65)",
+    background: "rgba(59, 130, 246, 0.1)",
+    boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.18)",
+    fontWeight: 600,
+  },
+  referenceShortcutLabel: { fontSize: 13, fontWeight: 600 },
+  referenceShortcutMeta: {
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    fontSize: 11,
+    opacity: 0.7,
+  },
+  referenceClear: {
+    alignSelf: "center",
+    border: "1px solid rgba(15, 23, 42, 0.18)",
+    background: "transparent",
+    color: "inherit",
+    borderRadius: 999,
+    padding: "4px 10px",
+    fontSize: 11,
+    cursor: "pointer",
+  },
+  compareCardReference: {
+    borderStyle: "dashed",
+    borderColor: "rgba(59, 130, 246, 0.5)",
+    background: "rgba(59, 130, 246, 0.04)",
+  },
+  referenceChip: {
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    borderRadius: 999,
+    padding: "2px 8px",
+    background: "rgba(59, 130, 246, 0.12)",
+    border: "1px solid rgba(59, 130, 246, 0.35)",
+    color: "#1d4ed8",
+    fontWeight: 700,
   },
 };

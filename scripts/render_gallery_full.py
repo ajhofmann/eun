@@ -593,14 +593,19 @@ def render_moser_ring_probe_panel() -> None:
     """Summarize the first bounded common-denominator Moser ring probe."""
 
     path = Path("data/runs/moser_ring_probe.jsonl")
-    if not path.exists():
+    best_path = Path("data/runs/moser_ring_probe_best.json")
+    if not path.exists() and not best_path.exists():
         return
-    rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
     best_by_k: dict[int, int] = {}
-    for row in rows:
-        for pruned in row.get("pruned", []):
-            k = int(pruned["n"])
-            best_by_k[k] = max(best_by_k.get(k, 0), int(pruned["e"]))
+    if best_path.exists():
+        for row in json.loads(best_path.read_text()):
+            best_by_k[int(row["k"])] = int(row["e"])
+    else:
+        rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+        for row in rows:
+            for pruned in row.get("pruned", []):
+                k = int(pruned["n"])
+                best_by_k[k] = max(best_by_k.get(k, 0), int(pruned["e"]))
 
     denom_powers = [0, 1, 2]
     unit_counts = [
@@ -618,11 +623,17 @@ def render_moser_ring_probe_panel() -> None:
     for i, count in enumerate(unit_counts):
         axes[0].text(i, count, str(count), ha="center", va="bottom", fontsize=9)
 
-    axes[1].plot(ks, [best_by_k[k] for k in ks], "o-", color="#8b5cf6", label="Moser ring greedy")
+    axes[1].plot(
+        ks,
+        [best_by_k[k] for k in ks],
+        "o-",
+        color="#8b5cf6",
+        label="Moser ring greedy + beam",
+    )
     axes[1].plot(ks, [engel_targets[k] for k in ks], "s--", color=COLORS["engel_2025"], label="Engel 2025")
     axes[1].set_xlabel("n")
     axes[1].set_ylabel("edges")
-    axes[1].set_title("First ring probe: more units, weaker search/window")
+    axes[1].set_title("First ring probe: more units, still weaker than Engel")
     axes[1].legend(fontsize=9)
     axes[1].grid(alpha=0.3)
     fig.tight_layout()

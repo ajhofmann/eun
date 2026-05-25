@@ -16,6 +16,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from eud.benchmarks.engel_2025 import engel_2025_rows
+from eud.benchmarks.engel_moser_internal import engel_moser_internal_rows
 from eud.benchmarks.known_bounds import known_bounds_rows
 from eud.benchmarks.score import Frontier
 from eud.core.io import read_jsonl, write_jsonl
@@ -31,12 +32,15 @@ def build_baseline_frontier(
     include_moser_hex: bool = True,
     include_rect_grid: bool = True,
     include_engel_2025: bool = True,
+    include_engel_moser_internal: bool = True,
+    engel_moser_internal_path: str | Path | None = None,
 ) -> list[dict]:
     """Best finite-construction frontier for u(n) at every n in [1, n_max].
 
     Sources (each row keeps a `source` / `family` tag for provenance):
       - `known_bounds`: literature-curated values for n in [1, 30]
       - `engel_2025`: published densest-known beam-search values for n in [1, 100]
+      - `engel_moser_internal`: certified Engel-Moser beam values for n > 100
       - `erdos_grid`: rectangular grid sweep at every n
       - `triangular`: hex / parallelogram / strip sweep at every n
       - `moser_hex`: visible-disk Moser sweep at every n in {25, ..., n_max}
@@ -51,6 +55,12 @@ def build_baseline_frontier(
 
     if include_engel_2025:
         rows.extend(r for r in engel_2025_rows() if int(r["n"]) <= n_max)
+
+    if include_engel_moser_internal:
+        internal_rows = engel_moser_internal_rows(
+            path=Path(engel_moser_internal_path or "data/runs/engel_moser_beyond_100.json")
+        )
+        rows.extend(r for r in internal_rows if int(r["n"]) <= n_max)
 
     if include_rect_grid:
         rows.extend(
@@ -74,9 +84,10 @@ def build_baseline_frontier(
     priority = {
         "known_bounds": 0,
         "engel_2025": 1,
-        "erdos_grid": 2,
-        "triangular": 3,
-        "moser_hex": 4,
+        "engel_moser_internal": 2,
+        "erdos_grid": 3,
+        "triangular": 4,
+        "moser_hex": 5,
     }
 
     best: dict[int, dict] = {}

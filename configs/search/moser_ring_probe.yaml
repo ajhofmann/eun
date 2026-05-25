@@ -2,9 +2,14 @@ name: moser_ring_probe
 family: moser_ring
 params:
   denom_power: [1]
-  coeff_bound: [2, 3, 4]
-  visible_radius: [1.5, 2.0, 2.5, 3.0]
+  coeff_bound: [2, 3]
+  visible_radius: [2.0, 2.5, 3.0]
   window_kind: visible_disk
 prune:
-  method: greedy
+  method: engel-beam
   ks: [25, 36, 49, 64, 81, 100]
+  beam_width: 12
+  beam_rounds: 8
+  beam_additions: 16
+  beam_drop_branches: 4
+  seed: 0

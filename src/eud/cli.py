@@ -40,7 +40,9 @@ def version() -> None:
 @app.command()
 def generate(
     family: str = typer.Option(
-        ..., "--family", help="moser | engel_moser | moser_ring | zeta5 | erdos_grid | biquadratic"
+        ...,
+        "--family",
+        help="moser | engel_moser | moser_ring | zeta5 | cyclotomic | erdos_grid | biquadratic",
     ),
     out: Path = typer.Option(..., "--out", help="output JSON path"),
     coeff_bound: int = typer.Option(2, "--coeff-bound", help="coefficient half-width"),
@@ -88,7 +90,7 @@ def generate(
         from eud.families.biquadratic import build as build_bq
 
         ps = tuple(int(x) for x in primes.split(",") if x.strip())
-        candidate = build_bq(BiquadraticParams(primes=ps, coeff_bound=coeff_bound))
+        candidate = build_bq(BiquadraticParams(primes=ps, coeff_bound=coeff_bound, R=R))
     else:
         raise typer.BadParameter(f"unknown family: {family}")
 
@@ -290,6 +292,9 @@ def baseline(
     no_moser_hex: bool = typer.Option(False, "--no-moser-hex"),
     no_rect_grid: bool = typer.Option(False, "--no-rect-grid"),
     no_engel_2025: bool = typer.Option(False, "--no-engel-2025"),
+    no_engel_moser_internal: bool = typer.Option(
+        False, "--no-engel-moser-internal", help="omit certified beyond-100 Engel-Moser rows"
+    ),
 ) -> None:
     """Build the published/reproducible best finite-construction frontier.
 
@@ -308,6 +313,7 @@ def baseline(
         include_moser_hex=not no_moser_hex,
         include_rect_grid=not no_rect_grid,
         include_engel_2025=not no_engel_2025,
+        include_engel_moser_internal=not no_engel_moser_internal,
     )
     p = write_jsonl(rows, out)
     console.print(f"[green]wrote[/green] {p}  rows={len(rows)} n_max={n_max}")

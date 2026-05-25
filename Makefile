@@ -1,4 +1,4 @@
-.PHONY: install test lint typecheck smoke-moser smoke-zeta5 baseline sweep clean
+.PHONY: install test lint typecheck smoke-moser smoke-zeta5 baseline sweep leaderboard web-dev web-build refresh-manifest clean
 
 install:
 	uv sync --all-extras --dev
@@ -26,12 +26,29 @@ smoke-zeta5:
 
 baseline:
 	uv run eud baseline --n-max 1000 --out data/frontiers/baseline.jsonl
+	uv run python scripts/promote_engel_frontier.py
+
+reproduce-engel:
+	PYTHONUNBUFFERED=1 uv run python scripts/reproduce_engel_2025.py
+
+beat-engel-sota:
+	PYTHONUNBUFFERED=1 uv run python scripts/search_beat_engel_sota.py
 
 sweep:
 	uv run eud search configs/search/biquadratic_rank6.yaml
 
 leaderboard:
-	uv run eud leaderboard
+	uv run eud leaderboard data/runs/cyclotomic_higher_rank.jsonl \
+		--frontier data/frontiers/baseline.jsonl --top 25
+
+refresh-manifest:
+	uv run python scripts/refresh_manifest.py
+
+web-dev:
+	cd web && npm run dev
+
+web-build:
+	cd web && npm run build
 
 clean:
 	rm -rf .pytest_cache .ruff_cache .mypy_cache build dist *.egg-info

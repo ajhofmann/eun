@@ -111,6 +111,12 @@ is indeed the missing ingredient; the remaining gap is likely Engel's
 full child/canonization machinery rather than geometry. The reproduction data
 lives in [`data/runs/engel_moser_reproduce.json`](data/runs/engel_moser_reproduce.json).
 
+**n=64 diagnostic (May 2026):** Beam search now keeps the densest child each
+round (not only the highest diversity-score states). Exhaustive one-swap moves
+from the certified `e=251` witness cannot reach `252`; a 48×24 beam pass still
+plateaus at `251`. Closing the last edge likely needs Engel's full diverse
+backtracking or a different seed path, not a missing unit direction.
+
 Beyond Engel et al.'s published n≤100 table, the same 18-unit family already
 beats the repo's fallback frontier by large margins:
 
@@ -159,6 +165,13 @@ The ζ_12 result is not SOTA, but it is still a good pipeline result:
   same Z[ζ_12] lattice, six windows, different dense subgraphs.
 - [`data/gallery/wins/compare_n100.png`](data/gallery/wins/compare_n100.png):
   local family comparison at fixed n.
+
+## Web viewer
+
+The [`web/`](web/) app mirrors this narrative: **results** (tables + PNGs),
+**constructions** (baseline diagrams), **gallery** (certified candidates),
+**frontier** (`baseline.jsonl`), and **explorer** (live `eud-api`). See
+[`web/README.md`](web/README.md).
 
 ## What to do next
 
